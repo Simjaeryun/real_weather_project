@@ -1,17 +1,10 @@
-import { UserList } from "@/features/user-list";
+import { getLocations } from "@/entities/location";
+import { WeatherDashboard } from "@/widgets/weather-dashboard";
 
 export default function Home() {
-  return (
-    <div>
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">
-          사용자 목록
-        </h2>
-        <p className="text-gray-600">
-          카드를 클릭하면 상세 정보를 확인할 수 있습니다.
-        </p>
-      </div>
-      <UserList />
-    </div>
-  );
+  // 서버에서 주소 목록만 로드 (좌표 없음)
+  // 좌표는 사용자가 선택할 때 필요시에만 클라이언트에서 geocoding
+  const locations = getLocations();
+
+  return <WeatherDashboard locations={locations} />;
 }
