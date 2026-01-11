@@ -5,8 +5,8 @@ import { WebsiteJsonLd } from "@/shared/components/json-ld";
 
 export const metadata: Metadata = {
   title: {
-    default: "Real Weather - 실시간 날씨 정보",
-    template: "%s | Real Weather",
+    default: "날씨 - 실시간 날씨 정보",
+    template: "%s | 날씨",
   },
   description:
     "전국 실시간 날씨 정보를 확인하세요. 기온, 습도, 강수량, 풍속 등 상세한 날씨 데이터를 제공합니다.",
@@ -21,16 +21,16 @@ export const metadata: Metadata = {
     "날씨 예보",
     "한국 날씨",
   ],
-  authors: [{ name: "Real Weather" }],
-  creator: "Real Weather",
-  publisher: "Real Weather",
+  authors: [{ name: "날씨 앱" }],
+  creator: "날씨 앱",
+  publisher: "날씨 앱",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL as string),
   openGraph: {
     type: "website",
     locale: "ko_KR",
     url: "/",
-    siteName: "Real Weather",
-    title: "Real Weather - 실시간 날씨 정보",
+    siteName: "날씨",
+    title: "날씨 - 실시간 날씨 정보",
     description:
       "전국 실시간 날씨 정보를 확인하세요. 기온, 습도, 강수량, 풍속 등 상세한 날씨 데이터를 제공합니다.",
     images: [
@@ -38,13 +38,13 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Real Weather",
+        alt: "날씨",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Real Weather - 실시간 날씨 정보",
+    title: "날씨 - 실시간 날씨 정보",
     description:
       "전국 실시간 날씨 정보를 확인하세요. 기온, 습도, 강수량, 풍속 등 상세한 날씨 데이터를 제공합니다.",
     images: ["/og-image.png"],
@@ -72,17 +72,8 @@ export default function RootLayout({
       <head>
         <WebsiteJsonLd />
       </head>
-      <body className="antialiased bg-gray-50">
-        <Providers>
-          <header className="bg-white shadow-sm">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-              <h1 className="text-2xl font-bold text-gray-900">Real Weather</h1>
-            </div>
-          </header>
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {children}
-          </main>
-        </Providers>
+      <body className="antialiased">
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

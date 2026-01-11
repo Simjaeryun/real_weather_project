@@ -11,7 +11,7 @@ interface LocationSearchProps {
 
 export function LocationSearch({
   onSelect,
-  placeholder = "장소를 검색하세요 (예: 서울, 종로구, 청운동)",
+  placeholder = "장소를 검색하세요 (예: 서울, 강남구)",
 }: LocationSearchProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Location[]>([]);
@@ -102,7 +102,23 @@ export function LocationSearch({
   return (
     <div className="relative w-full">
       {/* 검색 입력 */}
-      <div className="relative">
+      <div className="relative group">
+        <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+          <svg
+            className={`w-5 h-5 transition-colors ${query ? "text-blue-500" : "text-gray-400"}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+
         <input
           ref={inputRef}
           type="text"
@@ -111,12 +127,38 @@ export function LocationSearch({
           onKeyDown={handleKeyDown}
           onFocus={() => results.length > 0 && setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full px-4 py-3 pr-10 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full pl-12 pr-12 py-4 text-base bg-white border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm hover:shadow-md focus:shadow-lg placeholder:text-gray-400"
         />
+
         {isLoading && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <div className="absolute right-4 top-1/2 -translate-y-1/2">
             <Spinner size="sm" />
           </div>
+        )}
+
+        {query && !isLoading && (
+          <button
+            onClick={() => {
+              setQuery("");
+              setIsOpen(false);
+              setResults([]);
+            }}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
         )}
       </div>
 
@@ -124,31 +166,79 @@ export function LocationSearch({
       {isOpen && results.length > 0 && (
         <div
           ref={dropdownRef}
-          className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-[400px] overflow-y-auto"
+          className="absolute z-50 w-full mt-3 bg-white border-2 border-gray-100 rounded-2xl shadow-2xl max-h-[500px] overflow-hidden animate-dropdown"
         >
-          {results.map((location, index) => (
-            <button
-              key={location.id}
-              onClick={() => handleSelect(location)}
-              className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${
-                index === selectedIndex ? "bg-blue-50" : ""
-              }`}
-            >
-              <div className="font-medium text-gray-900">
-                {location.displayName}
-              </div>
-              <div className="text-sm text-gray-500 mt-0.5">
-                {location.fullAddress}
-              </div>
-            </button>
-          ))}
+          <div className="overflow-y-auto max-h-[500px] custom-scrollbar">
+            {results.map((location, index) => (
+              <button
+                key={location.id}
+                onClick={() => handleSelect(location)}
+                className={`group w-full px-5 py-4 text-left transition-all border-b border-gray-50 last:border-b-0 ${
+                  index === selectedIndex
+                    ? "bg-gradient-to-r from-blue-50 to-indigo-50"
+                    : "hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg
+                      className="w-5 h-5 text-blue-600"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-gray-900 mb-0.5 group-hover:text-blue-600 transition-colors">
+                      {location.displayName}
+                    </div>
+                    <div className="text-sm text-gray-500 truncate">
+                      {location.fullAddress}
+                    </div>
+                  </div>
+                  <svg
+                    className="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
       {/* 검색 결과 없음 */}
       {isOpen && !isLoading && query.trim() && results.length === 0 && (
-        <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-4 text-center text-gray-500">
-          검색 결과가 없습니다.
+        <div className="absolute z-50 w-full mt-3 bg-white border-2 border-gray-100 rounded-2xl shadow-2xl p-8 text-center animate-dropdown">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full mb-4">
+            <svg
+              className="w-8 h-8 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <p className="text-gray-600 font-medium mb-1">
+            "{query}" 검색 결과가 없습니다
+          </p>
+          <p className="text-sm text-gray-400">다른 검색어를 입력해보세요</p>
         </div>
       )}
     </div>

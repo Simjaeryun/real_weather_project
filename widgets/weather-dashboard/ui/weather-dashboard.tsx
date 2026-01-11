@@ -5,7 +5,11 @@ import { LocationSearch } from "@/features/weather-search";
 import { FavoriteList } from "@/features/favorite-list";
 import { Spinner, Button } from "@/shared/ui";
 import { useWeatherNavigation, useCurrentLocation } from "../model";
-import { useWeather, getWeatherEmoji } from "@/entities/weather";
+import {
+  useWeather,
+  getWeatherEmoji,
+  getWeatherDescription,
+} from "@/entities/weather";
 import { reverseGeocode } from "@/entities/location";
 import { useRouter } from "next/navigation";
 
@@ -49,77 +53,163 @@ export function WeatherDashboard() {
     }
   };
 
+  // 날씨 코드에 따른 배경 그라디언트
+  const getWeatherGradient = (weatherCode: number) => {
+    if (weatherCode === 0) return "from-amber-400 via-orange-400 to-yellow-500"; // 맑음
+    if (weatherCode <= 3) return "from-blue-400 via-cyan-400 to-sky-500"; // 구름 조금
+    if (weatherCode <= 48) return "from-gray-400 via-slate-400 to-gray-500"; // 안개
+    if (weatherCode <= 65) return "from-indigo-400 via-blue-500 to-blue-600"; // 비
+    if (weatherCode <= 77) return "from-blue-300 via-cyan-300 to-teal-400"; // 눈
+    if (weatherCode <= 86) return "from-slate-400 via-blue-400 to-indigo-500"; // 눈/비
+    return "from-purple-500 via-indigo-600 to-blue-700"; // 뇌우
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 헤더 */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">🌤️ 날씨</h1>
-          <p className="text-gray-600">
-            현재 위치 날씨를 확인하고 즐겨찾는 장소를 추가하세요
+        {/* 헤더 - 애니메이션 추가 */}
+        <div className="mb-10 animate-fade-in">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="text-5xl animate-bounce-slow">🌤️</div>
+            <h1 className="text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              날씨
+            </h1>
+          </div>
+          <p className="text-gray-600 text-lg">
+            실시간 날씨 정보와 예보를 확인하세요
           </p>
         </div>
 
-        {/* 현재 위치 날씨 카드 */}
-        <div className="mb-8">
+        {/* 현재 위치 날씨 카드 - 대폭 개선 */}
+        <div className="mb-10 animate-slide-up">
           {isLoadingLocation || isLoadingWeather ? (
-            <div className="bg-white rounded-xl p-6 shadow-md">
-              <div className="flex items-center justify-center py-8">
-                <Spinner size="lg" />
-                <span className="ml-3 text-gray-600">현재 위치 확인 중...</span>
+            <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl p-8 shadow-2xl">
+              <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+              <div className="relative flex items-center justify-center py-12">
+                <div className="flex flex-col items-center gap-4">
+                  <Spinner size="lg" />
+                  <span className="text-white text-lg font-medium animate-pulse-slow">
+                    현재 위치의 날씨를 가져오는 중...
+                  </span>
+                </div>
               </div>
             </div>
           ) : currentWeather && currentCoords ? (
             <button
               onClick={handleCurrentLocationClick}
-              className="w-full bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 shadow-lg text-white hover:shadow-xl transition-shadow cursor-pointer text-left"
+              className={`group relative w-full overflow-hidden bg-gradient-to-br ${getWeatherGradient(currentWeather.current.weatherCode)} rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 cursor-pointer text-left hover:scale-[1.02] active:scale-[0.98]`}
             >
-              <div className="flex items-center justify-between">
+              {/* 배경 애니메이션 */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+              {/* 빛나는 효과 */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-700"></div>
+
+              <div className="relative flex items-center justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-3 mb-4">
                     <svg
-                      className="w-5 h-5"
+                      className="w-6 h-6 text-white animate-pulse-slow"
                       fill="currentColor"
                       viewBox="0 0 24 24"
                     >
                       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                     </svg>
-                    <h2 className="text-xl font-semibold">{currentAddress}</h2>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">
+                        현재 위치
+                      </h2>
+                      <p className="text-white/90 text-sm">{currentAddress}</p>
+                    </div>
                   </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-bold">
+
+                  <div className="flex items-baseline gap-3 mb-3">
+                    <span className="text-7xl font-extrabold text-white drop-shadow-lg">
                       {currentWeather.current.temp}°
                     </span>
-                    <span className="text-lg opacity-90">
-                      {currentWeather.daily.tempMin}° /{" "}
-                      {currentWeather.daily.tempMax}°
-                    </span>
+                    <div className="text-white/90 text-xl">
+                      <div>
+                        {currentWeather.daily.tempMin}° /{" "}
+                        {currentWeather.daily.tempMax}°
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-white/90">
+                    <div className="text-lg font-medium">
+                      {getWeatherDescription(
+                        currentWeather.current.weatherCode,
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9 7h-6v13h-2v-6h-2v6H9V9H3V7h18v2z" />
+                      </svg>
+                      습도 {currentWeather.current.humidity}%
+                    </div>
                   </div>
                 </div>
-                <div className="text-7xl">
+
+                <div className="text-9xl drop-shadow-2xl group-hover:scale-110 transition-transform duration-500">
                   {getWeatherEmoji(currentWeather.current.weatherCode)}
                 </div>
+              </div>
+
+              {/* 하단 화살표 힌트 */}
+              <div className="absolute bottom-4 right-4 text-white/70 group-hover:text-white transition-colors">
+                <svg
+                  className="w-6 h-6 animate-bounce"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
               </div>
             </button>
           ) : null}
         </div>
 
-        {/* 검색 */}
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">
-            장소 검색
-          </h2>
+        {/* 검색 섹션 */}
+        <div className="mb-10 animate-slide-up-delay">
+          <div className="flex items-center gap-2 mb-4">
+            <svg
+              className="w-6 h-6 text-gray-700"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <h2 className="text-2xl font-bold text-gray-900">장소 검색</h2>
+          </div>
           {isLoadingCoords && (
-            <div className="mb-2 text-sm text-gray-600 flex items-center">
+            <div className="mb-3 text-sm text-indigo-600 flex items-center bg-indigo-50 rounded-lg px-3 py-2">
               <Spinner size="sm" />
-              <span className="ml-2">좌표 조회 중...</span>
+              <span className="ml-2 font-medium">좌표 조회 중...</span>
             </div>
           )}
           <LocationSearch onSelect={handleSelectLocation} />
         </div>
 
         {/* 즐겨찾기 목록 */}
-        <FavoriteList onCardClick={handleFavoriteCardClick} />
+        <div className="animate-slide-up-delay-2">
+          <FavoriteList onCardClick={handleFavoriteCardClick} />
+        </div>
       </div>
     </div>
   );
