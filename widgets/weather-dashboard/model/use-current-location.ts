@@ -1,34 +1,44 @@
-import { useState } from "react";
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+
+interface Coordinates {
+  lat: number;
+  lon: number;
+}
 
 /**
- * 브라우저의 Geolocation API를 사용하는 Hook
+ * 브라우저의 Geolocation API로 현재 위치 가져오기
  */
-export function useCurrentLocation() {
-  const [isLoading, setIsLoading] = useState(false);
-
-  const detectCurrentLocation = (
-    onSuccess: (lat: number, lon: number) => void,
-  ) => {
+const getCurrentPosition = (): Promise<Coordinates> => {
+  return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
-      alert("위치 서비스를 지원하지 않는 브라우저입니다.");
+      reject(new Error("위치 서비스를 지원하지 않는 브라우저입니다."));
       return;
     }
-
-    setIsLoading(true);
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        onSuccess(latitude, longitude);
-        setIsLoading(false);
+        resolve({ lat: latitude, lon: longitude });
       },
       (error) => {
         console.error("위치 감지 실패:", error);
-        alert("위치 정보를 가져올 수 없습니다. 위치 권한을 허용해주세요.");
-        setIsLoading(false);
+        reject(new Error("위치 정보를 가져올 수 없습니다. 위치 권한을 허용해주세요."));
       },
     );
-  };
+  });
+};
 
-  return { detectCurrentLocation, isLoading };
+/**
+ * 현재 위치를 Query로 관리하는 Hook
+ */
+export function useCurrentLocation() {
+  return useQuery<Coordinates>({
+    queryKey: ["currentLocation"],
+    queryFn: getCurrentPosition,
+    staleTime: 1000 * 60 * 5, // 5분간 fresh (같은 위치로 간주)
+    gcTime: 1000 * 60 * 10, // 10분간 캐시 유지
+    retry: false, // 위치 권한 거부 시 재시도 안 함
+  });
 }

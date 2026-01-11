@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { LocationSearch } from "@/features/weather-search";
 import { FavoriteList } from "@/features/favorite-list";
 import { Spinner } from "@/shared/ui";
@@ -19,20 +18,12 @@ export function WeatherDashboard() {
   const { handleSelectLocation, handleFavoriteCardClick, isLoadingCoords } =
     useWeatherNavigation();
 
-  const { detectCurrentLocation, isLoading: isLoadingLocation } =
-    useCurrentLocation();
-
-  const [currentCoords, setCurrentCoords] = useState<{
-    lat: number;
-    lon: number;
-  } | null>(null);
-
-  // 첫 진입시 자동으로 현재 위치 감지 (리다이렉트 없이)
-  useEffect(() => {
-    detectCurrentLocation((lat, lon) => {
-      setCurrentCoords({ lat, lon });
-    });
-  }, [detectCurrentLocation]);
+  // 현재 위치 자동 감지 (Query로 관리)
+  const {
+    data: currentCoords,
+    isLoading: isLoadingLocation,
+    error: locationError,
+  } = useCurrentLocation();
 
   // 좌표로부터 실제 주소 가져오기 (캐싱됨)
   const { data: currentAddress } = useReverseGeocode(
@@ -73,7 +64,19 @@ export function WeatherDashboard() {
 
         {/* 현재 위치 날씨 카드 - 대폭 개선 */}
         <div className="mb-10 animate-slide-up">
-          {isLoadingLocation || isLoadingWeather ? (
+          {locationError ? (
+            <div className="relative overflow-hidden bg-gradient-to-br from-gray-400 to-gray-500 rounded-3xl p-8 shadow-2xl">
+              <div className="relative text-center py-12">
+                <div className="text-6xl mb-4">📍</div>
+                <p className="text-white text-lg font-medium">
+                  위치 정보를 가져올 수 없습니다
+                </p>
+                <p className="text-white/80 text-sm mt-2">
+                  브라우저에서 위치 권한을 허용해주세요
+                </p>
+              </div>
+            </div>
+          ) : isLoadingLocation || isLoadingWeather ? (
             <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl p-8 shadow-2xl">
               <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
               <div className="relative flex items-center justify-center py-12">
