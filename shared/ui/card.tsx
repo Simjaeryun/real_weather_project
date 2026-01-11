@@ -3,8 +3,7 @@ import { ReactNode } from "react";
 type CardProps = React.HTMLAttributes<HTMLDivElement> & {
   children: ReactNode;
   className?: string;
- 
-}
+};
 
 export function Card({ children, className = "", ...props }: CardProps) {
   return (

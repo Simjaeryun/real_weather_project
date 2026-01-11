@@ -6,6 +6,8 @@ import type { WeatherData } from "./types";
 
 /**
  * 위치 좌표로 날씨 데이터 가져오기
+ *
+ * 날씨는 10분마다 갱신 → staleTime & gcTime 모두 10분
  */
 export function useWeather(
   lat: number | undefined,
@@ -21,7 +23,9 @@ export function useWeather(
       return fetchWeatherData(lat, lon, locationName);
     },
     enabled: !!lat && !!lon,
-    staleTime: 1000 * 60 * 10, // 10분간 fresh
-    gcTime: 1000 * 60 * 30, // 30분간 캐시 유지
+    staleTime: 1000 * 60 * 10, // 10분간 fresh (재요청 안함)
+    gcTime: 1000 * 60 * 10, // 10분 후 캐시 제거
   });
 }
+
+// 날씨가 10분내로 변화가 없다고 가정.

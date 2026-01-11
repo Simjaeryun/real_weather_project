@@ -1,17 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { searchLocationsClient, type Location } from "@/entities/location";
+import { searchLocations, type Location } from "@/entities/location";
 import { Spinner } from "@/shared/ui";
 
 interface LocationSearchProps {
-  locations: Location[]; // 서버에서 전달받은 주소 데이터
   onSelect: (location: Location) => void;
   placeholder?: string;
 }
 
 export function LocationSearch({
-  locations,
   onSelect,
   placeholder = "장소를 검색하세요 (예: 서울, 종로구, 청운동)",
 }: LocationSearchProps) {
@@ -34,7 +32,7 @@ export function LocationSearch({
 
       setIsLoading(true);
       try {
-        const searchResults = searchLocationsClient(locations, query, 10);
+        const searchResults = searchLocations(query, 10);
         setResults(searchResults.map((r) => r.location));
         setIsOpen(true);
         setSelectedIndex(-1);
@@ -48,7 +46,7 @@ export function LocationSearch({
 
     const debounce = setTimeout(search, 300);
     return () => clearTimeout(debounce);
-  }, [query, locations]);
+  }, [query]);
 
   // 외부 클릭 감지
   useEffect(() => {

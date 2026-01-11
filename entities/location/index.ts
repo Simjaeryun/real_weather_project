@@ -1,13 +1,18 @@
-// 클라이언트용
+// Location API
 export {
-  searchLocationsClient,
-  getLocationByIdClient,
-} from "./api/location-api";
-export { geocodeLocation } from "./api/geocode-client";
+  getLocations,
+  getLocationById,
+  searchLocations,
+  geocodeLocation,
+  fetchGeocode,
+} from "./api/location.api";
 
-// 서버용
-export { getLocations, getLocationById } from "./api/location-server";
-
-// 공통
+// Utils
 export { parseAddress } from "./lib/parser";
-export type { Location, LocationSearchResult } from "./model/types";
+
+// Types
+export type {
+  Location,
+  LocationSearchResult,
+  VWorldResponse,
+} from "./model/types";

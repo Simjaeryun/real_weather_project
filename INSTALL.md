@@ -59,12 +59,22 @@ npm install
 
 ## 개발 환경 설정
 
-### 환경 변수 (선택사항)
+### 환경 변수 설정 (필수)
 
-`.env.local` 파일을 생성하여 환경 변수를 설정할 수 있습니다:
+`.env.local` 파일을 생성하여 API 키를 설정하세요:
 
 ```env
-NEXT_PUBLIC_API_URL=https://jsonplaceholder.typicode.com
+NEXT_PUBLIC_VWORLD_API_KEY=your_vworld_api_key_here
+NEXT_PUBLIC_WEATHER_API_KEY=your_weather_api_key_here
 ```
 
-현재는 코드에 하드코딩되어 있지만, 실제 프로젝트에서는 환경 변수 사용을 권장합니다.
+**API 키 발급 방법:**
+
+1. **VWorld API 키** (지오코딩):
+   - https://www.vworld.kr 접속
+   - 회원가입 후 로그인
+   - API 신청 → Geocoder API 선택
+   - 발급받은 키를 `NEXT_PUBLIC_VWORLD_API_KEY`에 입력
+
+2. **날씨 API 키**:
+   - 현재 사용 중인 날씨 API 키를 설정

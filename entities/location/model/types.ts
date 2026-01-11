@@ -21,22 +21,28 @@ export interface LocationSearchResult {
 }
 
 /**
- * Nominatim API 응답 타입
- * @see https://nominatim.org/release-docs/latest/api/Output/
+ * VWorld Geocoder API 응답 타입
+ * @see https://www.vworld.kr/dev/v4dv_geocoderguide2_s001.do
  */
-export interface NominatimResponse {
-  place_id: number;
-  licence: string;
-  osm_type: string;
-  osm_id: number;
-  lat: string;
-  lon: string;
-  class: string;
-  type: string;
-  place_rank: number;
-  importance: number;
-  addresstype: string;
-  name: string;
-  display_name: string;
-  boundingbox: [string, string, string, string]; // [min_lat, max_lat, min_lon, max_lon]
+export interface VWorldResponse {
+  response: {
+    service: {
+      name: string;
+      version: string;
+      operation: string;
+      time: string;
+    };
+    status: string;
+    result?: {
+      crs: string;
+      point: {
+        x: string; // 경도 (longitude)
+        y: string; // 위도 (latitude)
+      };
+    };
+    error?: {
+      level: string;
+      text: string;
+    };
+  };
 }

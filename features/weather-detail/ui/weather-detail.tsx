@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   useWeather,
   getWeatherEmoji,
@@ -12,14 +13,10 @@ import { Spinner, Button } from "@/shared/ui";
 interface WeatherDetailProps {
   location: Location;
   initialAlias?: string;
-  onBack?: () => void;
 }
 
-export function WeatherDetail({
-  location,
-  initialAlias,
-  onBack,
-}: WeatherDetailProps) {
+export function WeatherDetail({ location, initialAlias }: WeatherDetailProps) {
+  const router = useRouter();
   const {
     data: weather,
     isLoading,
@@ -62,11 +59,13 @@ export function WeatherDetail({
         <p className="text-gray-600 text-lg">
           해당 장소의 정보가 제공되지 않습니다.
         </p>
-        {onBack && (
-          <Button onClick={onBack} variant="secondary" className="mt-4">
-            돌아가기
-          </Button>
-        )}
+        <Button
+          onClick={() => router.push("/")}
+          variant="secondary"
+          className="mt-4"
+        >
+          홈으로
+        </Button>
       </div>
     );
   }
@@ -82,27 +81,25 @@ export function WeatherDetail({
       {/* 헤더 */}
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="mb-2 text-blue-500 hover:text-blue-600 flex items-center gap-1"
+          <button
+            onClick={() => router.back()}
+            className="mb-2 text-blue-500 hover:text-blue-600 flex items-center gap-1"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              뒤로
-            </button>
-          )}
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            뒤로
+          </button>
           <h1 className="text-3xl font-bold text-gray-900">
             {location.displayName}
           </h1>

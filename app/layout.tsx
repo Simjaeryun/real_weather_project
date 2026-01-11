@@ -3,8 +3,8 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "FSD User Management",
-  description: "Feature Sliced Design 아키텍처 기반 사용자 관리 앱",
+  title: "Real Weather",
+  description: "날씨 정보 앱",
 };
 
 export default function RootLayout({
@@ -18,9 +18,7 @@ export default function RootLayout({
         <Providers>
           <header className="bg-white shadow-sm">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-              <h1 className="text-2xl font-bold text-gray-900">
-                사용자 관리 시스템
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-900">Real Weather</h1>
             </div>
           </header>
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

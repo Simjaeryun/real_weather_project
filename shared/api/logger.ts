@@ -174,8 +174,6 @@ function outputLog(logEntry: LogEntry): void {
 /**
  * 구조화된 로깅을 위한 메인 로거 함수
  *
- * 서버 액션으로 수행되어 서버 터미널에 출력되며,
- * AWS 환경에서는 CloudWatch Logs에 자동으로 수집됩니다.
  *
  * @param logData - 로그 데이터 객체
  */
