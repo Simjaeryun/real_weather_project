@@ -1,7 +1,16 @@
 import type { Metadata } from "next";
+import { Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { WebsiteJsonLd } from "@/shared/components/json-ld";
+
+const notoSansKr = Noto_Sans_KR({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  display: "swap",
+  variable: "--font-noto-sans",
+  preload: true,
+});
 
 export const metadata: Metadata = {
   title: {
@@ -68,11 +77,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" className={notoSansKr.variable}>
       <head>
         <WebsiteJsonLd />
       </head>
-      <body className="antialiased">
+      <body className={`${notoSansKr.className} antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>
