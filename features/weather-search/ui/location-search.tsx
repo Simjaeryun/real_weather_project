@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { searchLocations, type Location } from "@/entities/location";
+import {
+  searchLocations,
+  type Location,
+  useLocationCoords,
+} from "@/entities/location";
+import { useFavorites } from "@/entities/favorite";
+import { usePrefetchWeather } from "@/entities/weather";
 import { Spinner } from "@/shared/ui";
 
 interface LocationSearchProps {
@@ -20,6 +26,10 @@ export function LocationSearch({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { addFavorite, removeFavorite, isFavorite, canAddMore } =
+    useFavorites();
+  const { prefetchWeather } = usePrefetchWeather();
+  const { getCoords } = useLocationCoords();
 
   // 검색
   useEffect(() => {
@@ -99,6 +109,54 @@ export function LocationSearch({
     inputRef.current?.blur();
   };
 
+  const handleToggleFavorite = async (
+    e: React.MouseEvent,
+    location: Location,
+  ) => {
+    e.stopPropagation();
+    const isInFavorites = isFavorite(location.id);
+
+    if (isInFavorites) {
+      removeFavorite(location.id);
+    } else {
+      if (!canAddMore) {
+        alert("최대 6개까지만 추가할 수 있습니다.");
+        return;
+      }
+
+      // 1. 좌표가 없으면 먼저 조회
+      let locationWithCoords = location;
+      if (!location.lat || !location.lon) {
+        const coordsResult = await getCoords(location);
+        if (!coordsResult) {
+          alert("좌표 조회에 실패했습니다. 다시 시도해주세요.");
+          return;
+        }
+        locationWithCoords = coordsResult;
+      }
+
+      // 2. 좌표가 포함된 location으로 즐겨찾기 추가
+      addFavorite({
+        id: locationWithCoords.id,
+        location: locationWithCoords,
+        alias: locationWithCoords.displayName,
+        addedAt: new Date().toISOString(),
+      });
+
+      // 3. 날씨 데이터 미리 가져오기 (백그라운드에서 실행)
+      if (locationWithCoords.lat && locationWithCoords.lon) {
+        prefetchWeather(
+          locationWithCoords.lat,
+          locationWithCoords.lon,
+          locationWithCoords.displayName,
+        ).catch((error) => {
+          console.error("날씨 prefetch 실패:", error);
+          // 에러가 나도 즐겨찾기는 추가된 상태 유지
+        });
+      }
+    }
+  };
+
   return (
     <div className="relative w-full">
       {/* 검색 입력 */}
@@ -170,10 +228,9 @@ export function LocationSearch({
         >
           <div className="overflow-y-auto max-h-[500px] custom-scrollbar">
             {results.map((location, index) => (
-              <button
+              <div
                 key={location.id}
-                onClick={() => handleSelect(location)}
-                className={`group w-full px-5 py-4 text-left transition-all border-b border-gray-50 last:border-b-0 ${
+                className={`group w-full px-5 py-4 transition-all border-b border-gray-50 last:border-b-0 ${
                   index === selectedIndex
                     ? "bg-gradient-to-r from-blue-50 to-indigo-50"
                     : "hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50"
@@ -189,29 +246,70 @@ export function LocationSearch({
                       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                     </svg>
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <button
+                    onClick={() => handleSelect(location)}
+                    className="flex-1 min-w-0 text-left"
+                  >
                     <div className="font-semibold text-gray-900 mb-0.5 group-hover:text-blue-600 transition-colors">
                       {location.displayName}
                     </div>
                     <div className="text-sm text-gray-500 truncate">
                       {location.fullAddress}
                     </div>
-                  </div>
-                  <svg
-                    className="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                  </button>
+                  <button
+                    onClick={(e) => handleToggleFavorite(e, location)}
+                    className="flex-shrink-0 p-2 rounded-lg hover:bg-white/50 transition-all"
+                    title={
+                      isFavorite(location.id)
+                        ? "즐겨찾기 제거"
+                        : "즐겨찾기 추가"
+                    }
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
+                    {isFavorite(location.id) ? (
+                      <svg
+                        className="w-5 h-5 text-yellow-500"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-5 h-5 text-gray-400 hover:text-yellow-500 transition-colors"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleSelect(location)}
+                    className="flex-shrink-0"
+                  >
+                    <svg
+                      className="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         </div>

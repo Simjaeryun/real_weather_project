@@ -10,7 +10,7 @@ export {
 // ------------------------------------------------------------
 // QUERIES
 
-export { useWeather } from "./model/queries";
+export { useWeather, usePrefetchWeather } from "./model/queries";
 
 // ------------------------------------------------------------
 // TYPES

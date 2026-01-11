@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Favorite } from "./types";
 import { MAX_FAVORITES } from "./types";
 import {
@@ -8,15 +8,22 @@ import {
   addFavorite as addFavoriteStorage,
   removeFavorite as removeFavoriteStorage,
   updateFavoriteAlias as updateAliasStorage,
-  isFavorite as checkIsFavorite,
 } from "../lib/storage";
 
 /**
  * 즐겨찾기 관리 훅
- * React Compiler가 자동으로 메모이제이션 처리
+ * TanStack Query로 관리하여 자동 동기화
  */
 export function useFavorites() {
-  const [favorites, setFavorites] = useState<Favorite[]>(() => getFavorites());
+  const queryClient = useQueryClient();
+
+  // localStorage의 즐겨찾기 데이터를 query로 관리
+  const { data: favorites = [] } = useQuery<Favorite[]>({
+    queryKey: ["favorites"],
+    queryFn: getFavorites,
+    staleTime: Infinity, // localStorage 데이터는 항상 fresh
+    gcTime: Infinity, // 캐시 유지
+  });
 
   // 추가
   const addFavorite = (favorite: Favorite) => {
@@ -25,24 +32,30 @@ export function useFavorites() {
     }
 
     const updated = addFavoriteStorage(favorite);
-    setFavorites(updated);
+
+    // query 데이터 즉시 업데이트 (optimistic update)
+    queryClient.setQueryData(["favorites"], updated);
   };
 
   // 제거
   const removeFavorite = (id: string) => {
     const updated = removeFavoriteStorage(id);
-    setFavorites(updated);
+
+    // query 데이터 즉시 업데이트
+    queryClient.setQueryData(["favorites"], updated);
   };
 
   // 별칭 수정
   const updateAlias = (id: string, alias: string) => {
     const updated = updateAliasStorage(id, alias);
-    setFavorites(updated);
+
+    // query 데이터 즉시 업데이트
+    queryClient.setQueryData(["favorites"], updated);
   };
 
   // 즐겨찾기 여부 확인
   const isFavorite = (id: string) => {
-    return checkIsFavorite(id);
+    return favorites.some((f) => f.id === id);
   };
 
   return {
