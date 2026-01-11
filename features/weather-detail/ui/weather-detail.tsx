@@ -30,7 +30,7 @@ export function WeatherDetail({ location, initialAlias }: WeatherDetailProps) {
     location.lon,
   );
 
-  const { favorites, addFavorite, removeFavorite, isFavorite, canAddMore } =
+  const { addFavorite, removeFavorite, isFavorite, canAddMore } =
     useFavorites();
 
   const isInFavorites = isFavorite(location.id);

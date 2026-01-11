@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { Favorite } from "./types";
 import { MAX_FAVORITES } from "./types";
 import {
@@ -16,14 +16,7 @@ import {
  * React Compiler가 자동으로 메모이제이션 처리
  */
 export function useFavorites() {
-  const [favorites, setFavorites] = useState<Favorite[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // 초기 로드
-  useEffect(() => {
-    setFavorites(getFavorites());
-    setIsLoading(false);
-  }, []);
+  const [favorites, setFavorites] = useState<Favorite[]>(() => getFavorites());
 
   // 추가
   const addFavorite = (favorite: Favorite) => {
@@ -54,7 +47,6 @@ export function useFavorites() {
 
   return {
     favorites,
-    isLoading,
     addFavorite,
     removeFavorite,
     updateAlias,

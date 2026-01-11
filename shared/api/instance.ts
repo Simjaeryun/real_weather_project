@@ -1,6 +1,10 @@
-import ky from "ky";
+import ky, { type HTTPError } from "ky";
 import { createApiLogger } from "./logger";
 import { ENV } from "../constants/env";
+
+interface RequestWithTimestamp extends Request {
+  __startTime?: number;
+}
 
 /**
  * 공통 Hooks 정의
@@ -9,13 +13,14 @@ const commonHooks = {
   beforeRequest: [
     async (request: Request) => {
       const startTime = Date.now();
-      (request as any).__startTime = startTime;
+      (request as RequestWithTimestamp).__startTime = startTime;
       return request;
     },
   ],
   afterResponse: [
-    async (request: Request, options: any, response: Response) => {
-      const duration = Date.now() - ((request as any).__startTime || 0);
+    async (request: Request, _options: unknown, response: Response) => {
+      const duration =
+        Date.now() - ((request as RequestWithTimestamp).__startTime || 0);
 
       createApiLogger({
         type: "CLIENT",
@@ -29,8 +34,10 @@ const commonHooks = {
     },
   ],
   beforeError: [
-    async (error: any) => {
-      const duration = Date.now() - ((error.request as any)?.__startTime || 0);
+    async (error: HTTPError) => {
+      const duration =
+        Date.now() -
+        ((error.request as RequestWithTimestamp)?.__startTime || 0);
       const status = error.response?.status;
 
       createApiLogger({

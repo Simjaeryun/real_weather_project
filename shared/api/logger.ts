@@ -9,7 +9,7 @@ type LogLevel = "error" | "warn" | "info" | "debug";
 interface LogData {
   eventType?: EventType;
   message: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   timestamp?: Date;
 }
 
@@ -18,7 +18,7 @@ interface LogEntry {
   level: LogLevel;
   eventType?: EventType;
   message: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // ANSI 색상 코드
@@ -109,7 +109,7 @@ function formatTimestamp(timestamp: string): string {
 /**
  * 메타데이터를 보기 좋게 포맷팅합니다.
  */
-function formatMetadata(metadata?: Record<string, any>): string {
+function formatMetadata(metadata?: Record<string, unknown>): string {
   if (!metadata || Object.keys(metadata).length === 0) {
     return "";
   }
@@ -203,7 +203,7 @@ interface ApiLogContext {
   url: string;
   status?: number;
   duration?: number;
-  error?: any;
+  error?: unknown;
 }
 
 export const createApiLogger = (context: ApiLogContext) => {
@@ -219,16 +219,21 @@ export const createApiLogger = (context: ApiLogContext) => {
     errorDetails.push(`${method.toUpperCase()} ${cleanUrl}`);
     if (status) errorDetails.push(`Status: ${status}`);
 
-    if (error.name === "TimeoutError") {
+    const err = error as {
+      name?: string;
+      message?: string;
+      cause?: { code?: string };
+    };
+    if (err.name === "TimeoutError") {
       errorDetails.push("⏰ Request timeout");
-    } else if (error.cause?.code === "ENOTFOUND") {
+    } else if (err.cause?.code === "ENOTFOUND") {
       errorDetails.push("🌐 DNS resolution failed");
-    } else if (error.cause?.code === "ECONNREFUSED") {
+    } else if (err.cause?.code === "ECONNREFUSED") {
       errorDetails.push("🚫 Connection refused");
-    } else if (error.cause?.code === "ECONNRESET") {
+    } else if (err.cause?.code === "ECONNRESET") {
       errorDetails.push("🔌 Connection reset");
     } else {
-      errorDetails.push(`Error: ${error.message}`);
+      errorDetails.push(`Error: ${err.message || "Unknown error"}`);
     }
 
     logger({

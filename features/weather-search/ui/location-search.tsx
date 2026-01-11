@@ -236,7 +236,7 @@ export function LocationSearch({
             </svg>
           </div>
           <p className="text-gray-600 font-medium mb-1">
-            "{query}" 검색 결과가 없습니다
+            &quot;{query}&quot; 검색 결과가 없습니다
           </p>
           <p className="text-sm text-gray-400">다른 검색어를 입력해보세요</p>
         </div>
