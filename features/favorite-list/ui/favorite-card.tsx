@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { type Favorite } from "@/entities/favorite";
 import {
   useWeather,
   getWeatherEmoji,
   getWeatherDescription,
 } from "@/entities/weather";
-import { Card, Spinner, Button } from "@/shared/ui";
+import { Card, Spinner } from "@/shared/ui";
+import { useFavoriteCard } from "../model";
 
 interface FavoriteCardProps {
   favorite: Favorite;
@@ -22,38 +22,26 @@ export function FavoriteCard({
   onUpdateAlias,
   onClick,
 }: FavoriteCardProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedAlias, setEditedAlias] = useState(favorite.alias);
-
   const {
     data: weather,
     isLoading,
     error,
   } = useWeather(favorite.location.lat, favorite.location.lon, favorite.alias);
 
-  const handleSaveAlias = () => {
-    if (editedAlias.trim()) {
-      onUpdateAlias(favorite.id, editedAlias.trim());
-      setIsEditing(false);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditedAlias(favorite.alias);
-    setIsEditing(false);
-  };
-
-  const handleRemove = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm(`"${favorite.alias}"를 즐겨찾기에서 제거하시겠습니까?`)) {
-      onRemove(favorite.id);
-    }
-  };
-
-  const handleEditClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsEditing(true);
-  };
+  const {
+    isEditing,
+    editedAlias,
+    setEditedAlias,
+    handleSaveAlias,
+    handleCancelEdit,
+    handleRemove,
+    handleEditClick,
+  } = useFavoriteCard({
+    initialAlias: favorite.alias,
+    favoriteId: favorite.id,
+    onUpdateAlias,
+    onRemove,
+  });
 
   return (
     <Card

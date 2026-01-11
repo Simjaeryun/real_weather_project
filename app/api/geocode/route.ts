@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ENV } from "@/shared/api/env";
+import { ENV } from "@/shared/constants/env";
 
 /**
  * VWorld Geocoder API 프록시
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       simple: "false",
       format: "json",
       type: "parcel", // parcel(지번) 대신 road(도로명) 시도
-      key: ENV.VWORLD,
+      key: ENV.VWORLD_API_KEY,
     });
 
     const url = `${ENV.VWORLD_API_URL}?${params}`;

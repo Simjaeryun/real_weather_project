@@ -1,5 +1,6 @@
 "use client";
 
+import { apiInstance } from "@/shared/api/instance";
 import type { OpenMeteoResponse, WeatherData } from "../model/types";
 
 const BASE_URL = "https://api.open-meteo.com/v1/forecast";
@@ -24,7 +25,7 @@ export async function fetchWeatherData(
       timezone: "Asia/Seoul",
     });
 
-    const response = await fetch(`${BASE_URL}?${params}`);
+    const response = await apiInstance.get(`${BASE_URL}?${params}`);
 
     if (!response.ok) {
       throw new Error(`API 오류: ${response.status}`);

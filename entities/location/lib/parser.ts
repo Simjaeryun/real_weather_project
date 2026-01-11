@@ -22,37 +22,3 @@ export function parseAddress(fullAddress: string): Location {
     displayName,
   };
 }
-
-/**
- * 검색어와 주소 매칭 점수 계산
- */
-export function calculateMatchScore(
-  address: string,
-  searchTerm: string,
-): number {
-  const normalizedAddress = address.toLowerCase();
-  const normalizedSearch = searchTerm.toLowerCase().trim();
-
-  if (!normalizedSearch) return 0;
-
-  // 정확히 일치
-  if (normalizedAddress === normalizedSearch) return 100;
-
-  // 시작 부분 일치 (높은 점수)
-  if (normalizedAddress.startsWith(normalizedSearch)) return 90;
-
-  // 포함 여부
-  if (normalizedAddress.includes(normalizedSearch)) return 70;
-
-  // 부분 일치 (각 단어가 포함되는지)
-  const addressParts = address.split("-");
-  const matchingParts = addressParts.filter((part) =>
-    part.toLowerCase().includes(normalizedSearch),
-  );
-
-  if (matchingParts.length > 0) {
-    return 50 + matchingParts.length * 10;
-  }
-
-  return 0;
-}

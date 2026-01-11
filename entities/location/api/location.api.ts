@@ -1,13 +1,7 @@
-import type {
-  Location,
-  LocationSearchResult,
-  VWorldResponse,
-} from "../model/types";
-import { parseAddress, calculateMatchScore } from "../lib/parser";
+import type { Location, VWorldResponse } from "../model/types";
+import { parseAddress } from "../lib/parser";
 import koreaDistricts from "@/public/korea_districts.json";
-import { ENV } from "@/shared/api/env";
-import { apiInstance } from "@/shared/api/instance";
-import { logger } from "@/shared/api/logger";
+import { ENV } from "@/shared/constants/env";
 
 // ----------------------------------------------------------------------
 // Location 데이터
@@ -40,23 +34,10 @@ export function getLocationById(id: string): Location | null {
 /**
  * 주소 검색 (자동완성)
  */
-export function searchLocations(
-  query: string,
-  limit: number = 20,
-): LocationSearchResult[] {
+export function searchLocations(query: string): Location[] {
   if (!query.trim()) return [];
 
-  // 매칭 점수 계산
-  const results: LocationSearchResult[] = locations
-    .map((location) => ({
-      location,
-      matchScore: calculateMatchScore(location.fullAddress, query),
-    }))
-    .filter((result) => result.matchScore > 0)
-    .sort((a, b) => b.matchScore - a.matchScore)
-    .slice(0, limit);
-
-  return results;
+  return locations;
 }
 
 // ----------------------------------------------------------------------
@@ -68,9 +49,7 @@ export function searchLocations(
  */
 function formatAddress(fullAddress: string): string {
   // "시도-시군구-읍면동" 형식을 "시도 시군구 읍면동"으로 변환
-  const formatted = fullAddress.replace(/-/g, " ");
-  console.log("주소 변환:", fullAddress, "->", formatted);
-  return formatted;
+  return fullAddress.replace(/-/g, " ");
 }
 
 /**

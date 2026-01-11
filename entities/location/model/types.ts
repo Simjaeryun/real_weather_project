@@ -13,14 +13,6 @@ export interface Location {
 }
 
 /**
- * 검색 결과 (매칭 점수 포함)
- */
-export interface LocationSearchResult {
-  location: Location;
-  matchScore: number;
-}
-
-/**
  * VWorld Geocoder API 응답 타입
  * @see https://www.vworld.kr/dev/v4dv_geocoderguide2_s001.do
  */

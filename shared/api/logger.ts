@@ -38,7 +38,7 @@ const COLORS = {
 const LOG_LEVEL_CONFIG = {
   error: { color: COLORS.red, icon: "✗", label: "ERROR" },
   warn: { color: COLORS.yellow, icon: "⚠", label: "WARN " },
-  info: { color: COLORS.blue, icon: "ℹ", label: "INFO " },
+  info: { color: COLORS.blue, icon: "i", label: "INFO " },
   debug: { color: COLORS.cyan, icon: "◦", label: "DEBUG" },
 } as const;
 

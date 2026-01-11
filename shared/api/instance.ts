@@ -1,6 +1,6 @@
 import ky from "ky";
 import { createApiLogger } from "./logger";
-import { ENV } from "./env";
+import { ENV } from "../constants/env";
 
 export const apiInstance = ky.create({
   timeout: 10000,
