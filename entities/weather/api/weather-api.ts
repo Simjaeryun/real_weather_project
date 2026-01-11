@@ -4,7 +4,6 @@ import { externalApi } from "@/shared/api/instance";
 import type { OpenMeteoResponse, WeatherData } from "../model/types";
 import { ENV } from "@/shared/constants/env";
 
-
 /**
  * Open-Meteo API로 날씨 데이터 가져오기
  * API 키 불필요, 무료

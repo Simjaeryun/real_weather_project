@@ -1,8 +1,26 @@
 import { parseAddress } from "@/entities/location";
 import { WeatherDetail } from "@/features/weather-detail";
+import type { Metadata } from "next";
 
 interface WeatherPageProps {
   searchParams: Promise<{ lat?: string; lon?: string; name?: string }>;
+}
+
+export async function generateMetadata({
+  searchParams,
+}: WeatherPageProps): Promise<Metadata> {
+  const { lat, lon, name } = await searchParams;
+  const locationName = name ? decodeURIComponent(name) : "현재 위치";
+
+  return {
+    title: `${locationName} 날씨`,
+    description: `${locationName}의 실시간 날씨 정보를 확인하세요. 기온, 습도, 강수량, 풍속 등 상세한 날씨 데이터를 제공합니다.`,
+    openGraph: {
+      title: `${locationName} 날씨 | Real Weather`,
+      description: `${locationName}의 실시간 날씨 정보`,
+      url: `/weather?lat=${lat}&lon=${lon}&name=${name || ""}`,
+    },
+  };
 }
 
 export default async function WeatherPage({ searchParams }: WeatherPageProps) {
