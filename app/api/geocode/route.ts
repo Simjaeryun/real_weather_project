@@ -31,8 +31,8 @@ async function fetchWithRetry(
 }
 
 /**
- * VWorld Geocoder API 프록시
- * 좌표값은 변하지 않기 때문에  force-cache 설정.
+ * Kakao Local API 프록시 - 주소 검색
+ * @see https://developers.kakao.com/docs/latest/ko/local/dev-guide#address-coord
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -46,33 +46,17 @@ export async function GET(request: NextRequest) {
   }
 
   // 환경변수 검증
-  if (!ENV.VWORLD_API_URL || !ENV.VWORLD_API_KEY) {
-    console.error("환경변수 누락:", {
-      hasUrl: !!ENV.VWORLD_API_URL,
-      hasKey: !!ENV.VWORLD_API_KEY,
-    });
+  if (!ENV.KAKAO_REST_API_KEY) {
+    console.error("Kakao API 키 누락");
     return NextResponse.json(
-      { error: "서버 설정 오류: API 설정이 누락되었습니다" },
+      { error: "서버 설정 오류: Kakao API 키가 누락되었습니다" },
       { status: 500 },
     );
   }
 
   try {
-    const params = new URLSearchParams({
-      service: "address",
-      request: "getcoord",
-      version: "2.0",
-      crs: "epsg:4326",
-      address: address,
-      refine: "true",
-      simple: "false",
-      format: "json",
-      type: "parcel", // parcel(지번) 대신 road(도로명) 시도
-      key: ENV.VWORLD_API_KEY,
-    });
-
-    const url = `${ENV.VWORLD_API_URL}?${params}`;
-    console.log("VWorld API 요청 URL:", url);
+    const url = `https://dapi.kakao.com/v2/local/search/address.json?${new URLSearchParams({ query: address })}`;
+    console.log("Kakao API 요청:", { address });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -81,8 +65,7 @@ export async function GET(request: NextRequest) {
       url,
       {
         headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; Vercel/1.0)",
-          Accept: "application/json",
+          Authorization: `KakaoAK ${ENV.KAKAO_REST_API_KEY}`,
         },
         cache: "force-cache",
         signal: controller.signal,
@@ -92,14 +75,14 @@ export async function GET(request: NextRequest) {
 
     clearTimeout(timeoutId);
 
-    console.log("VWorld API 응답 상태:", response.status, response.statusText);
+    console.log("Kakao API 응답 상태:", response.status, response.statusText);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("VWorld API 오류 응답:", errorText);
+      console.error("Kakao API 오류:", errorText);
       return NextResponse.json(
         {
-          error: "VWorld API 호출 실패",
+          error: "Kakao API 호출 실패",
           status: response.status,
           message: errorText,
         },
@@ -108,7 +91,7 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log("VWorld API 응답 데이터:", JSON.stringify(data, null, 2));
+    console.log("Kakao API 응답:", JSON.stringify(data, null, 2));
     return NextResponse.json(data);
   } catch (error) {
     console.error("Geocoding API 오류:", error);

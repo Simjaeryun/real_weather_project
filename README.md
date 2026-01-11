@@ -15,11 +15,14 @@ cp env.example .env.local
 # .env.local 파일에 API 키 입력
 ```
 
-**VWorld API 키 발급** ([무료](https://www.vworld.kr/))
+**Kakao Maps API 키 발급** ([무료](https://developers.kakao.com/))
 
-1. VWorld 회원가입
-2. 인증키 발급
-3. `.env.local`에 입력
+1. [Kakao Developers](https://developers.kakao.com/) 회원가입
+2. 내 애플리케이션 > 애플리케이션 추가하기
+3. 앱 설정 > 앱 키 > REST API 키 복사
+4. `.env.local`에 `NEXT_PUBLIC_KAKAO_REST_API_KEY` 입력
+
+> **참고**: 무료 할당량 하루 30만건까지 사용 가능합니다.
 
 #### 2. 의존성 설치 및 실행
 
@@ -129,7 +132,22 @@ Next.js의 `removeConsole` 옵션을 켜면 프로덕션 빌드에서 console이
 - **Tailwind CSS 4** - 스타일링
 - **ky** - HTTP 클라이언트
 - **Open-Meteo API** - 날씨 데이터 (무료)
-- **VWorld API** - 한국 주소 좌표 변환
+- **Kakao Maps API** - 한국 주소 좌표 변환 (무료 30만건/일)
+
+## 트러블슈팅
+
+### Kakao Maps API 전환
+
+VWorld API는 Vercel(해외 서버)에서 502 에러가 발생하여 Kakao Maps API로 전환했습니다.
+
+**문제**: VWorld API는 한국 공공 API로 해외 IP를 차단하여 Vercel에서 동작하지 않음
+
+**해결**: Kakao Maps API 사용
+
+- ✅ Vercel에서 정상 작동 (글로벌 인프라 지원)
+- ✅ 안정적인 99.9% SLA
+- ✅ 무료 할당량 30만건/일 ([Kakao Developers](https://developers.kakao.com/docs/latest/ko/local/dev-guide))
+- ✅ 도메인 기반 보안
 
 ---
 

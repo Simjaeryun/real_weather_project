@@ -13,64 +13,75 @@ export interface Location {
 }
 
 /**
- * VWorld Geocoder API 응답 타입
- * @see https://www.vworld.kr/dev/v4dv_geocoderguide2_s001.do
+ * Kakao Local API - 주소 검색 응답 타입
+ * @see https://developers.kakao.com/docs/latest/ko/local/dev-guide#address-coord
  */
-export interface VWorldResponse {
-  response: {
-    service: {
-      name: string;
-      version: string;
-      operation: string;
-      time: string;
-    };
-    status: string;
-    result?: {
-      crs: string;
-      point: {
-        x: string; // 경도 (longitude)
-        y: string; // 위도 (latitude)
-      };
-    };
-    error?: {
-      level: string;
-      text: string;
-    };
+export interface KakaoAddressResponse {
+  meta: {
+    total_count: number;
+    pageable_count: number;
+    is_end: boolean;
   };
+  documents: Array<{
+    address_name: string; // 전체 지번 주소
+    address_type: "REGION" | "ROAD" | "REGION_ADDR" | "ROAD_ADDR";
+    x: string; // 경도
+    y: string; // 위도
+    address?: {
+      address_name: string;
+      region_1depth_name: string; // 시도
+      region_2depth_name: string; // 시군구
+      region_3depth_name: string; // 읍면동
+      mountain_yn: "Y" | "N";
+      main_address_no: string;
+      sub_address_no: string;
+      zip_code: string;
+    };
+    road_address?: {
+      address_name: string;
+      region_1depth_name: string;
+      region_2depth_name: string;
+      region_3depth_name: string;
+      road_name: string;
+      underground_yn: "Y" | "N";
+      main_building_no: string;
+      sub_building_no: string;
+      building_name: string;
+      zone_no: string;
+    };
+  }>;
 }
 
 /**
- * VWorld Reverse Geocoder API 응답 타입
- * @see https://www.vworld.kr/dev/v4dv_geocoderguide2_s002.do
+ * Kakao Local API - 좌표로 주소 변환 응답 타입
+ * @see https://developers.kakao.com/docs/latest/ko/local/dev-guide#coord-to-address
  */
-export interface VWorldReverseResponse {
-  response: {
-    service: {
-      name: string;
-      version: string;
-      operation: string;
-      time: string;
-    };
-    status: string;
-    result?: Array<{
-      type: string; // "parcel" | "road"
-      text: string; // 전체 주소
-      structure: {
-        level0: string; // 대한민국
-        level1: string; // 시도
-        level2: string; // 시군구
-        level3: string; // 읍면동
-        level4L: string; // 리
-        level4LC: string; // 리 코드
-        level4A: string; // 도로명
-        level4AC: string; // 도로명 코드
-        level5: string; // 건물번호
-        detail: string; // 상세 주소
-      };
-    }>;
-    error?: {
-      level: string;
-      text: string;
-    };
+export interface KakaoCoord2AddressResponse {
+  meta: {
+    total_count: number;
   };
+  documents: Array<{
+    address: {
+      address_name: string; // 전체 지번 주소
+      region_1depth_name: string; // 시도
+      region_2depth_name: string; // 시군구
+      region_3depth_name: string; // 읍면동
+      mountain_yn: "Y" | "N";
+      main_address_no: string;
+      sub_address_no: string;
+      zip_code: string;
+    };
+    road_address: {
+      address_name: string; // 전체 도로명 주소
+      region_1depth_name: string;
+      region_2depth_name: string;
+      region_3depth_name: string;
+      road_name: string;
+      underground_yn: "Y" | "N";
+      main_building_no: string;
+      sub_building_no: string;
+      building_name: string;
+      zone_no: string;
+    } | null;
+  }>;
 }

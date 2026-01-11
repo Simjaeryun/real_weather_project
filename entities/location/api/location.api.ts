@@ -1,11 +1,10 @@
 import type {
   Location,
-  VWorldResponse,
-  VWorldReverseResponse,
+  KakaoAddressResponse,
+  KakaoCoord2AddressResponse,
 } from "../model/types";
 import { parseAddress, calculateMatchScore } from "../lib/parser";
 import koreaDistricts from "@/public/korea_districts.json";
-import { ENV } from "@/shared/constants/env";
 
 // ----------------------------------------------------------------------
 // Location 데이터
@@ -60,7 +59,7 @@ export function searchLocations(query: string, limit: number = 20): Location[] {
 // ----------------------------------------------------------------------
 
 /**
- * 주소를 VWorld API 형식으로 변환
+ * 주소를 Kakao API 형식으로 변환
  */
 function formatAddress(fullAddress: string): string {
   // "시도-시군구-읍면동" 형식을 "시도 시군구 읍면동"으로 변환
@@ -68,14 +67,15 @@ function formatAddress(fullAddress: string): string {
 }
 
 /**
- * VWorld Geocoder API 호출
- * Next.js API Route를 통해 프록시 호출 (CORS 해결)
+ * Kakao Local API - 주소 검색 (Next.js API Route를 통해)
+ * @see https://developers.kakao.com/docs/latest/ko/local/dev-guide#address-coord
  *
  * @param address - 주소 문자열 (예: "서울특별시 종로구 청운동")
- * @returns VWorld API 응답
+ * @returns Kakao API 응답
  */
-export async function fetchGeocode(address: string): Promise<VWorldResponse> {
-  // 상대 경로로 Next.js API Route 호출
+export async function fetchGeocode(
+  address: string,
+): Promise<KakaoAddressResponse> {
   const response = await fetch(
     `/api/geocode?${new URLSearchParams({ address })}`,
   );
@@ -100,22 +100,14 @@ export async function geocodeLocation(
     const address = formatAddress(location.fullAddress);
     const data = await fetchGeocode(address);
 
-    // 응답 상태 확인
-    if (data.response.status !== "OK") {
-      console.warn(
-        `VWorld API 오류 (${location.fullAddress}):`,
-        data.response.error,
-      );
-      return null;
-    }
-
     // 결과 확인
-    if (!data.response.result?.point) {
+    if (!data.documents || data.documents.length === 0) {
       console.warn(`좌표 없음: ${location.fullAddress}`);
       return null;
     }
 
-    const { x, y } = data.response.result.point;
+    const firstResult = data.documents[0];
+    const { x, y } = firstResult;
 
     // 응답 검증
     if (!x || !y) {
@@ -125,8 +117,8 @@ export async function geocodeLocation(
 
     return {
       ...location,
-      lon: parseFloat(x), // VWorld: x = 경도
-      lat: parseFloat(y), // VWorld: y = 위도
+      lon: parseFloat(x), // 경도
+      lat: parseFloat(y), // 위도
     };
   } catch (error) {
     console.error("Geocoding 오류:", error);
@@ -135,13 +127,12 @@ export async function geocodeLocation(
 }
 
 // ----------------------------------------------------------------------
-// Reverse Geocoding API (VWorld)
+// Reverse Geocoding API (Kakao)
 // ----------------------------------------------------------------------
 
 /**
- * VWorld Reverse Geocoder API 호출
- * 좌표를 주소로 변환
- * @see https://www.vworld.kr/dev/v4dv_geocoderguide2_s002.do
+ * Kakao Local API - 좌표로 주소 변환 (Next.js API Route를 통해)
+ * @see https://developers.kakao.com/docs/latest/ko/local/dev-guide#coord-to-address
  *
  * @param lat - 위도
  * @param lon - 경도
@@ -152,7 +143,6 @@ export async function reverseGeocode(
   lon: number,
 ): Promise<string | null> {
   try {
-    // 상대 경로로 Next.js API Route 호출
     const response = await fetch(
       `/api/reverse-geocode?${new URLSearchParams({
         lat: lat.toString(),
@@ -161,40 +151,44 @@ export async function reverseGeocode(
     );
 
     if (!response.ok) {
-      throw new Error(`Reverse Geocoding 실패: ${response.status}`);
-    }
-
-    const data: VWorldReverseResponse = await response.json();
-
-    // 응답 상태 확인
-    if (data.response.status !== "OK") {
-      console.warn("VWorld Reverse Geocode 오류:", data.response.error);
+      console.warn(`Reverse Geocoding HTTP 오류: ${response.status}`);
       return null;
     }
 
+    const data: KakaoCoord2AddressResponse = await response.json();
+
     // 결과 확인
-    if (!data.response.result || data.response.result.length === 0) {
+    if (!data.documents || data.documents.length === 0) {
       console.warn("주소 없음:", lat, lon);
       return null;
     }
 
-    // 도로명 주소 우선, 없으면 지번 주소
-    const roadAddress = data.response.result.find(
-      (r: { type: string }) => r.type === "road",
-    );
-    const parcelAddress = data.response.result.find(
-      (r: { type: string }) => r.type === "parcel",
-    );
-    const address = roadAddress || parcelAddress;
+    const firstResult = data.documents[0];
 
-    if (!address) {
-      return null;
+    // 도로명 주소 우선, 없으면 지번 주소
+    const roadAddress = firstResult.road_address;
+    const address = firstResult.address;
+
+    if (roadAddress) {
+      // 간결한 주소: "시도 시군구 읍면동"
+      const parts = [
+        roadAddress.region_1depth_name,
+        roadAddress.region_2depth_name,
+        roadAddress.region_3depth_name,
+      ].filter(Boolean);
+      return parts.join(" ");
     }
 
-    // 간결한 주소 생성: "시도 시군구 읍면동"
-    const { level1, level2, level3 } = address.structure;
-    const parts = [level1, level2, level3].filter(Boolean);
-    return parts.join(" ");
+    if (address) {
+      const parts = [
+        address.region_1depth_name,
+        address.region_2depth_name,
+        address.region_3depth_name,
+      ].filter(Boolean);
+      return parts.join(" ");
+    }
+
+    return null;
   } catch (error) {
     console.error("Reverse Geocoding 오류:", error);
     return null;

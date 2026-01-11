@@ -21,6 +21,6 @@ export { parseAddress } from "./lib/parser";
 // Types
 export type {
   Location,
-  VWorldResponse,
-  VWorldReverseResponse,
+  KakaoAddressResponse,
+  KakaoCoord2AddressResponse,
 } from "./model/types";
