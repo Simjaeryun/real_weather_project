@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
 
   // 리액트 스트릭트 모드
   reactStrictMode: true,
+  reactCompiler: true,
 };
 
 export default nextConfig;

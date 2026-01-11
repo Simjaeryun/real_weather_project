@@ -3,15 +3,16 @@
 import { useState, useEffect } from "react";
 import { LocationSearch } from "@/features/weather-search";
 import { FavoriteList } from "@/features/favorite-list";
-import { Spinner, Button } from "@/shared/ui";
+import { Spinner } from "@/shared/ui";
 import { useWeatherNavigation, useCurrentLocation } from "../model";
 import {
   useWeather,
   getWeatherEmoji,
   getWeatherDescription,
 } from "@/entities/weather";
-import { reverseGeocode } from "@/entities/location";
+import { useReverseGeocode } from "@/entities/location";
 import { useRouter } from "next/navigation";
+import { getWeatherGradient } from "@/shared/lib";
 
 export function WeatherDashboard() {
   const router = useRouter();
@@ -25,43 +26,33 @@ export function WeatherDashboard() {
     lat: number;
     lon: number;
   } | null>(null);
-  const [currentAddress, setCurrentAddress] = useState<string>("현재 위치");
 
   // 첫 진입시 자동으로 현재 위치 감지 (리다이렉트 없이)
   useEffect(() => {
     detectCurrentLocation((lat, lon) => {
       setCurrentCoords({ lat, lon });
-      // 주소 가져오기
-      reverseGeocode(lat, lon).then((address) => {
-        if (address) setCurrentAddress(address);
-      });
     });
-  }, []);
+  }, [detectCurrentLocation]);
+
+  // 좌표로부터 실제 주소 가져오기 (캐싱됨)
+  const { data: currentAddress } = useReverseGeocode(
+    currentCoords?.lat,
+    currentCoords?.lon,
+  );
 
   // 현재 위치 날씨 데이터
   const { data: currentWeather, isLoading: isLoadingWeather } = useWeather(
     currentCoords?.lat,
     currentCoords?.lon,
-    currentAddress,
+    currentAddress || "현재 위치",
   );
 
   const handleCurrentLocationClick = () => {
-    if (currentCoords) {
+    if (currentCoords && currentAddress) {
       router.push(
         `/weather?lat=${currentCoords.lat}&lon=${currentCoords.lon}&name=${encodeURIComponent(currentAddress)}`,
       );
     }
-  };
-
-  // 날씨 코드에 따른 배경 그라디언트
-  const getWeatherGradient = (weatherCode: number) => {
-    if (weatherCode === 0) return "from-amber-400 via-orange-400 to-yellow-500"; // 맑음
-    if (weatherCode <= 3) return "from-blue-400 via-cyan-400 to-sky-500"; // 구름 조금
-    if (weatherCode <= 48) return "from-gray-400 via-slate-400 to-gray-500"; // 안개
-    if (weatherCode <= 65) return "from-indigo-400 via-blue-500 to-blue-600"; // 비
-    if (weatherCode <= 77) return "from-blue-300 via-cyan-300 to-teal-400"; // 눈
-    if (weatherCode <= 86) return "from-slate-400 via-blue-400 to-indigo-500"; // 눈/비
-    return "from-purple-500 via-indigo-600 to-blue-700"; // 뇌우
   };
 
   return (
@@ -119,7 +110,9 @@ export function WeatherDashboard() {
                       <h2 className="text-2xl font-bold text-white">
                         현재 위치
                       </h2>
-                      <p className="text-white/90 text-sm">{currentAddress}</p>
+                      <p className="text-white/90 text-sm">
+                        {currentAddress || "현재 위치"}
+                      </p>
                     </div>
                   </div>
 

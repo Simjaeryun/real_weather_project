@@ -8,6 +8,7 @@ import {
 } from "@/entities/weather";
 import { Spinner } from "@/shared/ui";
 import { useFavoriteCard } from "../model";
+import { getWeatherCardGradient } from "@/shared/lib";
 
 interface FavoriteCardProps {
   favorite: Favorite;
@@ -43,20 +44,9 @@ export function FavoriteCard({
     onRemove,
   });
 
-  // 날씨 코드에 따른 카드 배경 그라디언트
-  const getCardGradient = (weatherCode: number) => {
-    if (weatherCode === 0) return "from-amber-100 to-orange-100"; // 맑음
-    if (weatherCode <= 3) return "from-blue-100 to-cyan-100"; // 구름
-    if (weatherCode <= 48) return "from-gray-100 to-slate-100"; // 안개
-    if (weatherCode <= 65) return "from-indigo-100 to-blue-100"; // 비
-    if (weatherCode <= 77) return "from-blue-50 to-cyan-100"; // 눈
-    if (weatherCode <= 86) return "from-slate-100 to-blue-100"; // 눈/비
-    return "from-purple-100 to-indigo-100"; // 뇌우
-  };
-
   return (
     <div
-      className={`group relative overflow-hidden bg-gradient-to-br ${weather ? getCardGradient(weather.current.weatherCode) : "from-white to-gray-50"} rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-200/50 hover:scale-[1.03] hover:-translate-y-1`}
+      className={`group relative overflow-hidden bg-gradient-to-br ${weather ? getWeatherCardGradient(weather.current.weatherCode) : "from-white to-gray-50"} rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-200/50 hover:scale-[1.03] hover:-translate-y-1`}
       onClick={onClick}
     >
       {/* 빛나는 효과 */}

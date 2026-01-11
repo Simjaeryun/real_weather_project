@@ -1,15 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import {
   useWeather,
   getWeatherEmoji,
   getWeatherDescription,
 } from "@/entities/weather";
-import { type Location, reverseGeocode } from "@/entities/location";
+import { type Location, useReverseGeocode } from "@/entities/location";
 import { useFavorites } from "@/entities/favorite";
 import { Spinner, Button } from "@/shared/ui";
+import { getWeatherGradient, formatTime } from "@/shared/lib";
 
 interface WeatherDetailProps {
   location: Location;
@@ -18,25 +18,17 @@ interface WeatherDetailProps {
 
 export function WeatherDetail({ location, initialAlias }: WeatherDetailProps) {
   const router = useRouter();
-  const [addressFromCoords, setAddressFromCoords] = useState<string | null>(
-    null,
-  );
   const {
     data: weather,
     isLoading,
     error,
   } = useWeather(location.lat, location.lon, location.displayName);
 
-  // 좌표로부터 실제 주소 가져오기
-  useEffect(() => {
-    if (location.lat && location.lon) {
-      reverseGeocode(location.lat, location.lon).then((address) => {
-        if (address) {
-          setAddressFromCoords(address);
-        }
-      });
-    }
-  }, [location.lat, location.lon]);
+  // 좌표로부터 실제 주소 가져오기 (캐싱됨)
+  const { data: addressFromCoords } = useReverseGeocode(
+    location.lat,
+    location.lon,
+  );
 
   const { favorites, addFavorite, removeFavorite, isFavorite, canAddMore } =
     useFavorites();
@@ -58,17 +50,6 @@ export function WeatherDetail({ location, initialAlias }: WeatherDetailProps) {
         addedAt: new Date().toISOString(),
       });
     }
-  };
-
-  // 날씨 코드에 따른 배경 그라디언트
-  const getWeatherGradient = (weatherCode: number) => {
-    if (weatherCode === 0) return "from-amber-400 via-orange-400 to-yellow-500";
-    if (weatherCode <= 3) return "from-blue-400 via-sky-400 to-cyan-500";
-    if (weatherCode <= 48) return "from-gray-400 via-slate-400 to-gray-500";
-    if (weatherCode <= 65) return "from-indigo-500 via-blue-500 to-blue-600";
-    if (weatherCode <= 77) return "from-cyan-400 via-blue-400 to-indigo-400";
-    if (weatherCode <= 86) return "from-slate-400 via-blue-500 to-indigo-500";
-    return "from-purple-600 via-indigo-600 to-blue-700";
   };
 
   if (isLoading) {
@@ -106,12 +87,6 @@ export function WeatherDetail({ location, initialAlias }: WeatherDetailProps) {
       </div>
     );
   }
-
-  // 시간 포맷팅
-  const formatTime = (isoString: string) => {
-    const date = new Date(isoString);
-    return date.getHours().toString().padStart(2, "0") + "시";
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
