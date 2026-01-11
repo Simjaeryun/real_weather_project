@@ -75,9 +75,9 @@ function formatAddress(fullAddress: string): string {
  * @returns VWorld API 응답
  */
 export async function fetchGeocode(address: string): Promise<VWorldResponse> {
-  // 네이티브 fetch 사용 (절대 경로 필요)
+  // 상대 경로로 Next.js API Route 호출
   const response = await fetch(
-    `${ENV.APP_URL}/api/geocode?${new URLSearchParams({ address })}`,
+    `/api/geocode?${new URLSearchParams({ address })}`,
   );
 
   if (!response.ok) {
@@ -152,8 +152,9 @@ export async function reverseGeocode(
   lon: number,
 ): Promise<string | null> {
   try {
+    // 상대 경로로 Next.js API Route 호출
     const response = await fetch(
-      `${ENV.APP_URL}/api/reverse-geocode?${new URLSearchParams({
+      `/api/reverse-geocode?${new URLSearchParams({
         lat: lat.toString(),
         lon: lon.toString(),
       })}`,
