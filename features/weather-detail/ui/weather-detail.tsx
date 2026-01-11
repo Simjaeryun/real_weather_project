@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   useWeather,
   getWeatherEmoji,
   getWeatherDescription,
 } from "@/entities/weather";
-import { type Location } from "@/entities/location";
+import { type Location, reverseGeocode } from "@/entities/location";
 import { useFavorites } from "@/entities/favorite";
 import { Spinner, Button } from "@/shared/ui";
 
@@ -17,11 +18,25 @@ interface WeatherDetailProps {
 
 export function WeatherDetail({ location, initialAlias }: WeatherDetailProps) {
   const router = useRouter();
+  const [addressFromCoords, setAddressFromCoords] = useState<string | null>(
+    null,
+  );
   const {
     data: weather,
     isLoading,
     error,
   } = useWeather(location.lat, location.lon, location.displayName);
+
+  // 좌표로부터 실제 주소 가져오기
+  useEffect(() => {
+    if (location.lat && location.lon) {
+      reverseGeocode(location.lat, location.lon).then((address) => {
+        if (address) {
+          setAddressFromCoords(address);
+        }
+      });
+    }
+  }, [location.lat, location.lon]);
 
   const { favorites, addFavorite, removeFavorite, isFavorite, canAddMore } =
     useFavorites();
@@ -101,7 +116,7 @@ export function WeatherDetail({ location, initialAlias }: WeatherDetailProps) {
             뒤로
           </button>
           <h1 className="text-3xl font-bold text-gray-900">
-            {location.displayName}
+            {addressFromCoords || location.displayName}
           </h1>
           <p className="text-gray-500 text-sm mt-1">
             {new Date(weather.updatedAt).toLocaleString("ko-KR")} 업데이트

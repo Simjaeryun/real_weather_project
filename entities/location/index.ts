@@ -11,10 +11,15 @@ export {
   searchLocations,
   geocodeLocation,
   fetchGeocode,
+  reverseGeocode,
 } from "./api/location.api";
 
 // Utils
 export { parseAddress } from "./lib/parser";
 
 // Types
-export type { Location, VWorldResponse } from "./model/types";
+export type {
+  Location,
+  VWorldResponse,
+  VWorldReverseResponse,
+} from "./model/types";

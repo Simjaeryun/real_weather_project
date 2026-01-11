@@ -1,4 +1,8 @@
-import type { Location, VWorldResponse } from "../model/types";
+import type {
+  Location,
+  VWorldResponse,
+  VWorldReverseResponse,
+} from "../model/types";
 import { parseAddress, calculateMatchScore } from "../lib/parser";
 import koreaDistricts from "@/public/korea_districts.json";
 import { ENV } from "@/shared/constants/env";
@@ -126,6 +130,72 @@ export async function geocodeLocation(
     };
   } catch (error) {
     console.error("Geocoding 오류:", error);
+    return null;
+  }
+}
+
+// ----------------------------------------------------------------------
+// Reverse Geocoding API (VWorld)
+// ----------------------------------------------------------------------
+
+/**
+ * VWorld Reverse Geocoder API 호출
+ * 좌표를 주소로 변환
+ * @see https://www.vworld.kr/dev/v4dv_geocoderguide2_s002.do
+ *
+ * @param lat - 위도
+ * @param lon - 경도
+ * @returns 주소 문자열 또는 null
+ */
+export async function reverseGeocode(
+  lat: number,
+  lon: number,
+): Promise<string | null> {
+  try {
+    const response = await fetch(
+      `${ENV.APP_URL}/api/reverse-geocode?${new URLSearchParams({
+        lat: lat.toString(),
+        lon: lon.toString(),
+      })}`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`Reverse Geocoding 실패: ${response.status}`);
+    }
+
+    const data: VWorldReverseResponse = await response.json();
+
+    // 응답 상태 확인
+    if (data.response.status !== "OK") {
+      console.warn("VWorld Reverse Geocode 오류:", data.response.error);
+      return null;
+    }
+
+    // 결과 확인
+    if (!data.response.result || data.response.result.length === 0) {
+      console.warn("주소 없음:", lat, lon);
+      return null;
+    }
+
+    // 도로명 주소 우선, 없으면 지번 주소
+    const roadAddress = data.response.result.find(
+      (r: { type: string }) => r.type === "road",
+    );
+    const parcelAddress = data.response.result.find(
+      (r: { type: string }) => r.type === "parcel",
+    );
+    const address = roadAddress || parcelAddress;
+
+    if (!address) {
+      return null;
+    }
+
+    // 간결한 주소 생성: "시도 시군구 읍면동"
+    const { level1, level2, level3 } = address.structure;
+    const parts = [level1, level2, level3].filter(Boolean);
+    return parts.join(" ");
+  } catch (error) {
+    console.error("Reverse Geocoding 오류:", error);
     return null;
   }
 }
