@@ -8,7 +8,17 @@ interface FavoriteListProps {
 }
 
 export function FavoriteList({ onCardClick }: FavoriteListProps) {
-  const { favorites, removeFavorite, updateAlias } = useFavorites();
+  const { favorites, removeFavorite, updateAlias, clearAll } = useFavorites();
+
+  const handleClearAll = () => {
+    if (
+      confirm(
+        `즐겨찾기 ${favorites.length}개를 모두 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`,
+      )
+    ) {
+      clearAll();
+    }
+  };
 
   if (favorites.length === 0) {
     return (
@@ -53,20 +63,42 @@ export function FavoriteList({ onCardClick }: FavoriteListProps) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-2 sm:gap-3">
           <svg
-            className="w-6 h-6 text-yellow-500"
+            className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500 flex-shrink-0"
             fill="currentColor"
             viewBox="0 0 24 24"
           >
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
           </svg>
-          <h2 className="text-2xl font-bold text-gray-900">즐겨찾기</h2>
-          <span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-bold rounded-full shadow-md">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+            즐겨찾기
+          </h2>
+          <span className="px-2 sm:px-3 py-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs sm:text-sm font-bold rounded-full shadow-md">
             {favorites.length}/{MAX_FAVORITES}
           </span>
         </div>
+        <button
+          onClick={handleClearAll}
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg transition-all duration-200 border border-red-200 hover:border-red-300 text-sm font-medium shadow-sm hover:shadow"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+          <span className="hidden xs:inline">전체 삭제</span>
+          <span className="xs:hidden">삭제</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

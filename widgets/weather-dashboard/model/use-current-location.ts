@@ -24,7 +24,11 @@ const getCurrentPosition = (): Promise<Coordinates> => {
       },
       (error) => {
         console.error("위치 감지 실패:", error);
-        reject(new Error("위치 정보를 가져올 수 없습니다. 위치 권한을 허용해주세요."));
+        reject(
+          new Error(
+            "위치 정보를 가져올 수 없습니다. 위치 권한을 허용해주세요.",
+          ),
+        );
       },
     );
   });

@@ -76,3 +76,11 @@ export function isFavorite(id: string): boolean {
   const favorites = getFavorites();
   return favorites.some((f) => f.id === id);
 }
+
+/**
+ * 즐겨찾기 전체 삭제
+ */
+export function clearAllFavorites(): Favorite[] {
+  saveFavorites([]);
+  return [];
+}

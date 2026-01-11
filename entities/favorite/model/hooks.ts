@@ -8,6 +8,7 @@ import {
   addFavorite as addFavoriteStorage,
   removeFavorite as removeFavoriteStorage,
   updateFavoriteAlias as updateAliasStorage,
+  clearAllFavorites as clearAllStorage,
 } from "../lib/storage";
 
 /**
@@ -53,6 +54,12 @@ export function useFavorites() {
     queryClient.setQueryData(["favorites"], updated);
   };
 
+  // 전체 삭제
+  const clearAll = () => {
+    const updated = clearAllStorage();
+    queryClient.setQueryData(["favorites"], updated);
+  };
+
   // 즐겨찾기 여부 확인
   const isFavorite = (id: string) => {
     return favorites.some((f) => f.id === id);
@@ -63,6 +70,7 @@ export function useFavorites() {
     addFavorite,
     removeFavorite,
     updateAlias,
+    clearAll,
     isFavorite,
     canAddMore: favorites.length < MAX_FAVORITES,
   };
