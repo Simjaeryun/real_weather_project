@@ -20,6 +20,7 @@ const nextConfig: NextConfig = {
   // 리액트 스트릭트 모드
   reactStrictMode: true,
   reactCompiler: true,
+  output: "standalone",
 };
 
 export default nextConfig;

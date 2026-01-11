@@ -1,0 +1,48 @@
+# Set ARG
+ARG BASE_IMAGE=node:20-alpine
+
+# Node.js 20 기반 이미지
+FROM ${BASE_IMAGE}
+
+ARG NODE_OPTIONS="--max-old-space-size=2048"
+
+# Set Node.js memory limit
+ENV NODE_OPTIONS=${NODE_OPTIONS}
+
+RUN echo "################################################" && \
+    echo "# [START] BUILD BASE DOCKER FILE               #" && \
+    echo "################################################" && \
+    echo "01. DATE : $(date)" && \
+    echo "01. LANG : $LANG"
+
+# Install dependencies for locale and timezone setup
+RUN apk add --no-cache tzdata bash tree
+
+# Set timezone to Seoul
+RUN ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
+    echo "Asia/Seoul" > /etc/timezone
+
+# Set environment variables for locale
+ENV LANG=ko_KR.UTF-8
+ENV LANGUAGE=ko_KR:ko
+ENV LC_ALL=ko_KR.UTF-8
+
+RUN echo "02. DATE : $(date)" && \
+    echo "02. LANG : $LANG"
+
+# Set working directory
+WORKDIR /app
+
+# Copy only dependency files (for layer caching)
+COPY package.json package-lock.json ./
+
+RUN echo "03. Installing dependencies..." && \
+    npm ci && \
+    echo "04. Dependencies installed successfully"
+
+# Verify node_modules
+RUN echo "################################################" && \
+    echo "# [FINAL] BASE IMAGE (node_modules only)       #" && \
+    echo "################################################" && \
+    du -sh node_modules && \
+    ls -la node_modules | head -20

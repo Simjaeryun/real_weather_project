@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "docker:build:base": "docker build -f Dockerfile-fe-base -t fsd-weather-base:latest .",
+    "docker:build:prod": "./docker-build.sh",
+    "docker:run": "docker run -p 3000:3000 fsd-weather-prod:latest"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.11",

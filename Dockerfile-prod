@@ -1,0 +1,141 @@
+# ===== DEPENDENCIES STAGE =====
+# Base 이미지에서 node_modules만 가져오기
+ARG BASE_IMAGE_FE=fsd-weather-base:latest
+FROM ${BASE_IMAGE_FE} AS dependencies
+
+# ===== BUILDER STAGE =====
+# 실제 빌드를 위한 깨끗한 이미지 시작
+FROM node:20-alpine AS builder
+
+# 빌드 환경 변수 설정
+ARG APP_ENV="production"
+ARG NODE_OPTIONS="--max-old-space-size=2048"
+ARG DISCORD_WEBHOOK_URL=""
+
+# Node.js 메모리 옵션 설정
+ENV NODE_OPTIONS=${NODE_OPTIONS}
+# Next.js 텔레메트리 비활성화 (성능 향상)
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# 빌드 시작 로그 출력 및 Discord 알림 (선택사항)
+RUN echo "#####################################################################" && \
+    echo "# [START] BUILD [WEATHER-APP] [${APP_ENV}]                          #" && \
+    echo "#####################################################################" && \
+    echo "01. DATE : $(date)" && \
+    (if [ -n "$DISCORD_WEBHOOK_URL" ]; then \
+        echo "Sending Discord notification..." && \
+        apk add --no-cache wget && \
+        wget -q -O- --timeout=10 --tries=2 \
+        --header="Content-Type: application/json" \
+        --post-data="{\"embeds\":[{\"title\":\"🏗️ WEATHER-APP 빌드 시작\",\"description\":\"환경: ${APP_ENV}\\n메모리: ${NODE_OPTIONS}\\n시작 시간: $(date)\",\"color\":5865522,\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%S.000Z)\"}]}" \
+        $DISCORD_WEBHOOK_URL && echo "Discord notification sent" || echo "Discord notification failed (ignored)"; \
+    else \
+        echo "Discord webhook not configured (skipping)"; \
+    fi) || true
+
+# Base 이미지에서 node_modules만 복사
+COPY --from=dependencies /app/node_modules ./node_modules
+
+# 소스 코드 복사
+COPY . .
+
+# 환경 변수 파일 정리 및 설정
+RUN echo "02. Setting up environment files..." && \
+    # .env.prod가 있으면 .env.production으로 복사
+    if [ -f .env.prod ]; then \
+        echo "Found .env.prod, copying to .env.production" && \
+        cp .env.prod .env.production; \
+    fi && \
+    # .env 파일이 없으면 env.example을 복사
+    if [ ! -f .env ] && [ ! -f .env.production ]; then \
+        echo "No .env file found, using env.example with defaults" && \
+        cp env.example .env && \
+        sed -i 's/your_vworld_api_key_here//g' .env; \
+    fi && \
+    # .env와 .env.production만 유지, 나머지 삭제 (.env.local 포함)
+    find . -name ".env*" ! -name ".env.production" ! -name ".env" -type f -delete && \
+    echo "Environment setup completed" && \
+    echo "Using environment files:" && \
+    ls -la .env* 2>/dev/null || echo "No .env files found"
+
+# Next.js 앱 빌드 실행
+RUN echo "03. Building Next.js application..." && npm run build
+
+# 빌드 성공 알림 (선택사항 - 실패해도 무시)
+RUN (if [ -n "$DISCORD_WEBHOOK_URL" ]; then \
+        echo "Sending build success notification..." && \
+        wget -q -O- --timeout=10 --tries=2 \
+        --header="Content-Type: application/json" \
+        --post-data="{\"embeds\":[{\"title\":\"✅ WEATHER-APP 빌드 완료\",\"description\":\"환경: ${APP_ENV}\\n완료 시간: $(date)\",\"color\":5763719,\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%S.000Z)\"}]}" \
+        $DISCORD_WEBHOOK_URL && echo "Discord notification sent" || echo "Discord notification failed (ignored)"; \
+    else \
+        echo "Discord webhook not configured (skipping)"; \
+    fi) || true
+
+# Show build result structure
+RUN apk add --no-cache tree && \
+    echo "################################################" && \
+    echo "# [BUILD RESULT] STRUCTURE                     #" && \
+    echo "################################################" && \
+    tree -I 'node_modules' -L 3 .next
+
+# ===== RUNTIME STAGE =====
+# 경량화된 Node.js 런타임 이미지 사용
+FROM node:20-alpine AS runner
+
+# 런타임 환경 변수 설정
+ARG APP_ENV="production"
+
+# 환경 변수를 컨테이너 내부에서 사용할 수 있도록 설정
+ENV APP_ENV=${APP_ENV}
+# 프로덕션 모드로 실행 (최적화된 성능)
+ENV NODE_ENV=production
+# 포트 설정
+ENV PORT=3000
+# Next.js 텔레메트리 비활성화
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# 런타임 시작 로그 출력
+RUN echo "#####################################################################" && \
+    echo "# [START] RUNTIME [WEATHER-APP] [${APP_ENV}]                        #" && \
+    echo "#####################################################################"
+
+# 애플리케이션 작업 디렉토리 설정
+WORKDIR /app
+
+# Install tree for runtime structure viewing
+RUN apk add --no-cache tree
+
+# 보안을 위한 non-root 사용자 생성
+# nodejs 그룹 생성 (GID: 1001)
+RUN addgroup --system --gid 1001 nodejs && \
+    # nextjs 사용자 생성 (UID: 1001, nodejs 그룹 소속)
+    adduser --system --uid 1001 nextjs
+
+# 빌더 스테이지에서 빌드된 파일들을 런타임 이미지로 복사
+# standalone 서버 파일 복사 (Next.js 독립 실행 파일)
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+# 정적 파일 복사 (CSS, JS, 이미지 등)
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# public 폴더 복사 (정적 자산)
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+# Show final runtime structure
+RUN echo "################################################" && \
+    echo "# [RUNTIME] FINAL STRUCTURE                    #" && \
+    echo "################################################" && \
+    tree -I 'node_modules' -L 3
+
+# 보안을 위해 non-root 사용자로 전환
+USER nextjs
+
+# 컨테이너가 사용할 포트 노출
+EXPOSE ${PORT}
+
+# 애플리케이션 시작 명령어 (standalone 서버 실행)
+CMD ["node", "server.js"]
+
+ 

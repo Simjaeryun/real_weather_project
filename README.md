@@ -4,49 +4,56 @@ Next.js 기반 실시간 날씨 조회 서비스입니다. FSD 아키텍처를 �
 
 ## 🚀 프로젝트 실행 방법
 
-### 1. 환경 변수 설정
+두 가지 실행 방법을 제공합니다: **일반 빌드** 또는 **Docker 실행**
 
-`env.example` 파일을 `.env.local`로 복사하고 필요한 API 키를 설정합니다.
+### 방법 1: 일반 빌드 (개발/테스트용)
+
+#### 1. 환경 변수 설정
 
 ```bash
 cp env.example .env.local
+# .env.local 파일에 API 키 입력
 ```
 
-#### VWorld API 키 발급 방법
+**VWorld API 키 발급** ([무료](https://www.vworld.kr/))
 
-1. [VWorld](https://www.vworld.kr/) 회원가입
-2. 인증키 발급 (무료)
-3. `.env.local`에 API 키 입력
+1. VWorld 회원가입
+2. 인증키 발급
+3. `.env.local`에 입력
 
-```env
-NEXT_PUBLIC_VWORLD_API_KEY=발급받은_API_키
-NEXT_PUBLIC_VWORLD_API_URL=https://api.vworld.kr/req/address
-NEXT_PUBLIC_WEATHER_API_URL=https://api.open-meteo.com/v1/forecast
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-> **참고**: Open-Meteo API는 API 키가 필요 없는 무료 서비스입니다.
-
-### 2. 의존성 설치
+#### 2. 의존성 설치 및 실행
 
 ```bash
 npm install
-```
+npm run dev  # 개발 서버 (http://localhost:3000)
 
-### 3. 개발 서버 실행
-
-```bash
-npm run dev
-```
-
-브라우저에서 [http://localhost:3000](http://localhost:3000)을 열어 확인합니다.
-
-### 4. 빌드 및 프로덕션 실행
-
-```bash
+# 또는 프로덕션 빌드
 npm run build
 npm start
 ```
+
+### 방법 2: Docker 실행 (프로덕션용)
+
+빌드 효율을 위해 `node_modules` 캐싱용 **Base 이미지**와 **Production 이미지**를 분리했습니다.
+
+```bash
+# 1. Base 이미지 빌드 (최초 1회 또는 package.json 변경 시)
+npm run docker:build:base
+
+# 2. 환경 변수 설정
+cp env.example .env
+# ⚠️ Docker는 .env 또는 .env.prod만 인식 (.env.local은 무시됨)
+
+# 3. Production 이미지 빌드 (Next.js standalone 방식)
+npm run docker:build:prod
+
+# 4. 실행
+npm run docker:run
+# → http://localhost:3000
+```
+
+> **빌드 최적화:** Base 이미지를 재사용하면 5분 → 1분으로 단축됩니다.  
+> 자세한 내용은 [DOCKER.md](DOCKER.md) 참고
 
 ## 구현 기능
 
@@ -99,14 +106,19 @@ staleTime: 60 * 60 * 1000,
 - **import 경로가 깁니다**: `@/entities/weather/model/queries` 같은 경로를 계속 쓰다 보니 불편했습니다 (그래서 각 폴더마다 index.ts로 public API를 정리했습니다)
 - **작은 기능에는 오버엔지니어링**
 
-결론적으로, 팀 프로젝트나 규모가 큰 서비스라면 FSD가 확실히 유리할 것 같습니다. 다만 크지않은 프로젝트나, 프로토타입, MVP를 빠르게 만들 때는 route 기반이 더 나을 수도 있겠다는 생각이 들었습니다.
+결론적으로, 팀 프로젝트나 규모가 큰 서비스라면 FSD가 확실히 유리할 것 같습니다. 다만 작은 프로젝트나 프로토타입을 빠르게 만들 때는 route 기반이 더 나을 수도 있겠다는 생각이 들었습니다.
 
-### 기타 선택들
+### Next.js를 선택한 이유
 
-- **Next.js 선택 이유**: 이 프로젝트 자체가 과제 테스트였고, 채용 공고에서 Next.js와 SSR/SSG, SEO 최적화 경험을 요구하고 있어서 선택했습니다. 메타데이터 API로 동적 SEO를 구현하고, App Router로 SSR을 적용하면서 요구사항을 충족시킬 수 있었습니다
-- **전역 상태 관리를 안 쓴 이유**: 평소에는 Zustand를 주로 사용하는데, 이 프로젝트는 서버 상태(날씨, 위치)만 있고 복잡한 클라이언트 상태가 없어서 TanStack Query만으로 충분했습니다. 즐겨찾기는 LocalStorage로 직접 관리했습니다
-- **커스텀 로거**: Next.js의 `removeConsole` 옵션을 켜면 프로덕션 빌드에서 console이 다 지워지는데, 문제는 서버 콘솔까지 같이 사라진다는 점입니다. 서버 에러를 트래킹할 방법이 없어져서 디버깅이 너무 힘들더라고요. 그래서 커스텀 logger 함수를 만들어서 나중에 환경변수로 클라이언트 로그만 선택적으로 지울 수 있게 했습니다
-- **Open-Meteo API**: API 키도 필요 없고 무료인데 데이터가 꽤 정확합니다.
+이 프로젝트는 과제 테스트였고, 채용 공고에서 Next.js와 SSR/SSG, SEO 최적화 경험을 요구했습니다. 메타데이터 API로 동적 SEO를 구현하고 App Router로 SSR을 적용하면서 요구사항을 충족시킬 수 있었습니다.
+
+### 전역 상태 관리를 안 쓴 이유
+
+평소에는 Zustand를 주로 쓰는데, 이 프로젝트는 서버 상태(날씨, 위치)만 있고 복잡한 클라이언트 상태가 없어서 TanStack Query만으로 충분했습니다. 즐겨찾기는 LocalStorage로 직접 관리했습니다.
+
+### 커스텀 로거를 만든 이유
+
+Next.js의 `removeConsole` 옵션을 켜면 프로덕션 빌드에서 console이 다 지워지는데, 문제는 서버 콘솔까지 같이 사라진다는 점입니다. 서버 에러를 트래킹할 방법이 없어져서 디버깅이 너무 힘들더라고요. 그래서 커스텀 logger를 만들어서 나중에 환경변수로 클라이언트 로그만 선택적으로 지울 수 있게 했습니다.
 
 ## 기술 스택
 
