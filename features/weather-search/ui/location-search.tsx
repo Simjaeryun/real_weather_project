@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import {
-  searchLocations,
-  type Location,
-  useLocationCoords,
-} from "@/entities/location";
-import { useFavorites } from "@/entities/favorite";
-import { usePrefetchWeather } from "@/entities/weather";
+import type { Location } from "@/entities/location";
+import { useFavoriteToggle } from "@/entities/favorite";
 import { Spinner } from "@/shared/ui";
+import {
+  useLocationSearch,
+  useSearchDropdown,
+  useKeyboardNavigation,
+} from "../model";
 
 interface LocationSearchProps {
   onSelect: (location: Location) => void;
@@ -19,94 +18,36 @@ export function LocationSearch({
   onSelect,
   placeholder = "장소를 검색하세요 (예: 서울, 강남구)",
 }: LocationSearchProps) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Location[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const { addFavorite, removeFavorite, isFavorite, canAddMore } =
-    useFavorites();
-  const { prefetchWeather } = usePrefetchWeather();
-  const { getCoords } = useLocationCoords();
+  // 검색 로직
+  const { query, setQuery, results, isLoading, clearSearch } =
+    useLocationSearch();
 
-  // 검색
-  useEffect(() => {
-    const search = () => {
-      if (query.trim().length < 1) {
-        setResults([]);
-        setIsOpen(false);
-        return;
-      }
+  // 드롭다운 상태
+  const { isOpen, setIsOpen, closeDropdown, inputRef, dropdownRef } =
+    useSearchDropdown();
 
-      setIsLoading(true);
-      try {
-        const searchResults = searchLocations(query, 10);
-        setResults(searchResults);
-        setIsOpen(true);
-        setSelectedIndex(-1);
-      } catch (error) {
-        console.error("검색 실패:", error);
-        setResults([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // 즐겨찾기 토글 (entities/favorite에서)
+  const { toggleFavorite, isFavorite } = useFavoriteToggle();
 
-    const debounce = setTimeout(search, 300);
-    return () => clearTimeout(debounce);
-  }, [query]);
-
-  // 외부 클릭 감지
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node) &&
-        !inputRef.current?.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // 키보드 네비게이션
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isOpen || results.length === 0) return;
-
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setSelectedIndex((prev) =>
-          prev < results.length - 1 ? prev + 1 : prev,
-        );
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
-        break;
-      case "Enter":
-        e.preventDefault();
-        if (selectedIndex >= 0 && results[selectedIndex]) {
-          handleSelect(results[selectedIndex]);
-        }
-        break;
-      case "Escape":
-        setIsOpen(false);
-        break;
-    }
-  };
-
+  // 선택 처리
   const handleSelect = (location: Location) => {
     onSelect(location);
-    setQuery("");
-    setIsOpen(false);
-    setResults([]);
+    clearSearch();
+    closeDropdown();
     inputRef.current?.blur();
+  };
+
+  // 키보드 네비게이션
+  const { selectedIndex, handleKeyDown, resetSelection } =
+    useKeyboardNavigation(results, isOpen, handleSelect, closeDropdown);
+
+  // 검색 결과가 나오면 드롭다운 열기
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+    if (value.trim() && results.length > 0) {
+      setIsOpen(true);
+    }
+    resetSelection();
   };
 
   const handleToggleFavorite = async (
@@ -114,47 +55,12 @@ export function LocationSearch({
     location: Location,
   ) => {
     e.stopPropagation();
-    const isInFavorites = isFavorite(location.id);
+    await toggleFavorite(location);
+  };
 
-    if (isInFavorites) {
-      removeFavorite(location.id);
-    } else {
-      if (!canAddMore) {
-        alert("최대 6개까지만 추가할 수 있습니다.");
-        return;
-      }
-
-      // 1. 좌표가 없으면 먼저 조회
-      let locationWithCoords = location;
-      if (!location.lat || !location.lon) {
-        const coordsResult = await getCoords(location);
-        if (!coordsResult) {
-          alert("좌표 조회에 실패했습니다. 다시 시도해주세요.");
-          return;
-        }
-        locationWithCoords = coordsResult;
-      }
-
-      // 2. 좌표가 포함된 location으로 즐겨찾기 추가
-      addFavorite({
-        id: locationWithCoords.id,
-        location: locationWithCoords,
-        alias: locationWithCoords.displayName,
-        addedAt: new Date().toISOString(),
-      });
-
-      // 3. 날씨 데이터 미리 가져오기 (백그라운드에서 실행)
-      if (locationWithCoords.lat && locationWithCoords.lon) {
-        prefetchWeather(
-          locationWithCoords.lat,
-          locationWithCoords.lon,
-          locationWithCoords.displayName,
-        ).catch((error) => {
-          console.error("날씨 prefetch 실패:", error);
-          // 에러가 나도 즐겨찾기는 추가된 상태 유지
-        });
-      }
-    }
+  const handleClearInput = () => {
+    clearSearch();
+    closeDropdown();
   };
 
   return (
@@ -181,7 +87,7 @@ export function LocationSearch({
           ref={inputRef}
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => handleQueryChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => results.length > 0 && setIsOpen(true)}
           placeholder={placeholder}
@@ -196,11 +102,7 @@ export function LocationSearch({
 
         {query && !isLoading && (
           <button
-            onClick={() => {
-              setQuery("");
-              setIsOpen(false);
-              setResults([]);
-            }}
+            onClick={handleClearInput}
             className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
           >
             <svg

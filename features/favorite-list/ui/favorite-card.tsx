@@ -7,22 +7,15 @@ import {
   getWeatherDescription,
 } from "@/entities/weather";
 import { Spinner } from "@/shared/ui";
-import { useFavoriteCard } from "../model";
 import { getWeatherCardGradient } from "@/shared/lib";
+import { useFavoriteCardActions } from "../model";
 
 interface FavoriteCardProps {
   favorite: Favorite;
-  onRemove: (id: string) => void;
-  onUpdateAlias: (id: string, alias: string) => void;
   onClick: () => void;
 }
 
-export function FavoriteCard({
-  favorite,
-  onRemove,
-  onUpdateAlias,
-  onClick,
-}: FavoriteCardProps) {
+export function FavoriteCard({ favorite, onClick }: FavoriteCardProps) {
   const {
     data: weather,
     isLoading,
@@ -37,11 +30,9 @@ export function FavoriteCard({
     handleCancelEdit,
     handleRemove,
     handleEditClick,
-  } = useFavoriteCard({
-    initialAlias: favorite.alias,
+  } = useFavoriteCardActions({
     favoriteId: favorite.id,
-    onUpdateAlias,
-    onRemove,
+    initialAlias: favorite.alias,
   });
 
   return (

@@ -56,7 +56,7 @@ export interface KakaoAddressResponse {
  * Kakao Local API - 좌표로 주소 변환 응답 타입
  * @see https://developers.kakao.com/docs/latest/ko/local/dev-guide#coord-to-address
  */
-export interface KakaoCoord2AddressResponse {
+export interface KakaoCoordAddressResponse {
   meta: {
     total_count: number;
   };

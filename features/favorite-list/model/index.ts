@@ -1,1 +1,1 @@
-export { useFavoriteCard } from "./use-favorite-card";
+export { useFavoriteCardActions } from "./use-favorite-card-actions";

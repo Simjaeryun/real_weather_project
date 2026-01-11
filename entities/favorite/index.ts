@@ -1,4 +1,5 @@
-export { useFavorites } from "./model/hooks";
+export { useFavorites } from "./model/favorite.hooks";
+export { useFavoriteToggle } from "./model/use-favorite-toggle";
 export { getFavorites, isFavorite, clearAllFavorites } from "./lib/storage";
 
 // TYPES

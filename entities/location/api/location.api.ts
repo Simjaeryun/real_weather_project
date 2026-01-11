@@ -1,7 +1,7 @@
 import type {
   Location,
   KakaoAddressResponse,
-  KakaoCoord2AddressResponse,
+  KakaoCoordAddressResponse,
 } from "../model/types";
 import { parseAddress, calculateMatchScore } from "../lib/parser";
 import koreaDistricts from "@/public/korea_districts.json";
@@ -155,7 +155,7 @@ export async function reverseGeocode(
       return null;
     }
 
-    const data: KakaoCoord2AddressResponse = await response.json();
+    const data: KakaoCoordAddressResponse = await response.json();
 
     // 결과 확인
     if (!data.documents || data.documents.length === 0) {

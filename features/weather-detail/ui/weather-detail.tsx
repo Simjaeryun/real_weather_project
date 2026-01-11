@@ -7,7 +7,7 @@ import {
   getWeatherDescription,
 } from "@/entities/weather";
 import { type Location, useReverseGeocode } from "@/entities/location";
-import { useFavorites } from "@/entities/favorite";
+import { useFavoriteToggle } from "@/entities/favorite";
 import { Spinner, Button } from "@/shared/ui";
 import { getWeatherGradient, formatTime } from "@/shared/lib";
 
@@ -30,26 +30,11 @@ export function WeatherDetail({ location, initialAlias }: WeatherDetailProps) {
     location.lon,
   );
 
-  const { addFavorite, removeFavorite, isFavorite, canAddMore } =
-    useFavorites();
-
+  const { toggleFavorite, isFavorite } = useFavoriteToggle();
   const isInFavorites = isFavorite(location.id);
 
   const handleToggleFavorite = () => {
-    if (isInFavorites) {
-      removeFavorite(location.id);
-    } else {
-      if (!canAddMore) {
-        alert("최대 6개까지만 추가할 수 있습니다.");
-        return;
-      }
-      addFavorite({
-        id: location.id,
-        location,
-        alias: initialAlias || location.displayName,
-        addedAt: new Date().toISOString(),
-      });
-    }
+    toggleFavorite(location, initialAlias);
   };
 
   if (isLoading) {

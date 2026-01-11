@@ -1,5 +1,4 @@
 export {
- 
   getWeatherGradient,
   getWeatherCardGradient,
   formatTime,

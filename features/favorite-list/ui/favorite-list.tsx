@@ -8,7 +8,7 @@ interface FavoriteListProps {
 }
 
 export function FavoriteList({ onCardClick }: FavoriteListProps) {
-  const { favorites, removeFavorite, updateAlias, clearAll } = useFavorites();
+  const { favorites, clearAll } = useFavorites();
 
   const handleClearAll = () => {
     if (
@@ -110,8 +110,6 @@ export function FavoriteList({ onCardClick }: FavoriteListProps) {
           >
             <FavoriteCard
               favorite={favorite}
-              onRemove={removeFavorite}
-              onUpdateAlias={updateAlias}
               onClick={() => onCardClick(favorite.id)}
             />
           </div>

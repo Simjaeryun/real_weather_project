@@ -1,6 +1,5 @@
 // Hooks
-export { useLocationCoords } from "./model/location.hook";
-export { useReverseGeocode } from "./model/reverse-geocode.hook";
+export { useLocationCoords, useReverseGeocode } from "./model/location.hook";
 
 // Queries
 export { useGeocodeQuery, geocodeQueryOptions } from "./api/location.query";
@@ -22,5 +21,5 @@ export { parseAddress } from "./lib/parser";
 export type {
   Location,
   KakaoAddressResponse,
-  KakaoCoord2AddressResponse,
+  KakaoCoordAddressResponse,
 } from "./model/types";
