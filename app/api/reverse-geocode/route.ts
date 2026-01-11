@@ -1,6 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ENV } from "@/shared/constants/env";
 
+// Vercel edge runtime에서는 Node.js runtime 사용
+export const runtime = "nodejs";
+
+/**
+ * Retry 로직이 있는 fetch
+ */
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries = 3,
+): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      return response;
+    } catch (error) {
+      console.warn(`Fetch 시도 ${i + 1}/${retries} 실패:`, error);
+
+      if (i === retries - 1) {
+        throw error;
+      }
+
+      // 재시도 전 대기 (exponential backoff)
+      await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
+    }
+  }
+  throw new Error("Fetch 재시도 실패");
+}
+
 /**
  * VWorld Reverse Geocoder API 프록시
  * 좌표를 주소로 변환
@@ -45,18 +74,23 @@ export async function GET(request: NextRequest) {
     });
 
     const url = `${ENV.VWORLD_API_URL}?${params}`;
-    console.log("VWorld Reverse Geocode 요청:", { lat, lon });
+    console.log("VWorld Reverse Geocode 요청:", { lat, lon, url });
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8초 타임아웃
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-    const response = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetchWithRetry(
+      url,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; Vercel/1.0)",
+          Accept: "application/json",
+        },
+        cache: "force-cache",
+        signal: controller.signal,
       },
-      cache: "force-cache", // 좌표는 불변이므로 캐싱
-      signal: controller.signal,
-    });
+      3,
+    );
 
     clearTimeout(timeoutId);
 
