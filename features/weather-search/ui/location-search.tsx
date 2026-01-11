@@ -32,8 +32,8 @@ export function LocationSearch({
 
       setIsLoading(true);
       try {
-        const searchResults = searchLocations(query);
-        setResults(searchResults.map((r) => r));
+        const searchResults = searchLocations(query, 10);
+        setResults(searchResults);
         setIsOpen(true);
         setSelectedIndex(-1);
       } catch (error) {

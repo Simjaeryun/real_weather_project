@@ -1,9 +1,9 @@
 "use client";
 
-import { apiInstance } from "@/shared/api/instance";
+import { externalApi } from "@/shared/api/instance";
 import type { OpenMeteoResponse, WeatherData } from "../model/types";
+import { ENV } from "@/shared/constants/env";
 
-const BASE_URL = "https://api.open-meteo.com/v1/forecast";
 
 /**
  * Open-Meteo API로 날씨 데이터 가져오기
@@ -25,7 +25,7 @@ export async function fetchWeatherData(
       timezone: "Asia/Seoul",
     });
 
-    const response = await apiInstance.get(`${BASE_URL}?${params}`);
+    const response = await externalApi.get(`${ENV.WEATHER_API_URL}?${params}`);
 
     if (!response.ok) {
       throw new Error(`API 오류: ${response.status}`);

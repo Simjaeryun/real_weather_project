@@ -1,5 +1,5 @@
 import type { Location, VWorldResponse } from "../model/types";
-import { parseAddress } from "../lib/parser";
+import { parseAddress, calculateMatchScore } from "../lib/parser";
 import koreaDistricts from "@/public/korea_districts.json";
 import { ENV } from "@/shared/constants/env";
 
@@ -34,10 +34,21 @@ export function getLocationById(id: string): Location | null {
 /**
  * 주소 검색 (자동완성)
  */
-export function searchLocations(query: string): Location[] {
+export function searchLocations(query: string, limit: number = 20): Location[] {
   if (!query.trim()) return [];
 
-  return locations;
+  // 매칭 점수 계산 및 정렬
+  const results = locations
+    .map((location) => ({
+      location,
+      score: calculateMatchScore(location.fullAddress, query),
+    }))
+    .filter((result) => result.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((result) => result.location);
+
+  return results;
 }
 
 // ----------------------------------------------------------------------
@@ -60,12 +71,9 @@ function formatAddress(fullAddress: string): string {
  * @returns VWorld API 응답
  */
 export async function fetchGeocode(address: string): Promise<VWorldResponse> {
-  // 서버/클라이언트 환경 구분
-  const baseUrl = ENV.APP_URL;
-
   // 네이티브 fetch 사용 (절대 경로 필요)
   const response = await fetch(
-    `${baseUrl}/api/geocode?${new URLSearchParams({ address })}`,
+    `${ENV.APP_URL}/api/geocode?${new URLSearchParams({ address })}`,
   );
 
   if (!response.ok) {
